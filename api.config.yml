@@ -1,0 +1,5 @@
+defaultVersion: "v1"
+prefix: "/api"
+availableVersions:
+- "v1"
+- "v2"
