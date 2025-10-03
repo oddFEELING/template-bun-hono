@@ -29,23 +29,6 @@ app.get("/", (c) => {
   });
 });
 
-// ~ ======= OpenAPI Documentation ======= ~
-app.doc("/doc/raw", {
-  openapi: "3.0.0",
-  info: {
-    version: "0.0.1",
-    title: "Chowbea API",
-    description: "ChowBea API server documentation",
-    contact: {
-      name: "Emmanuel Alawode",
-      url: "https://github.com/_oddfeeling",
-      email: "platforms@chowbea.com",
-    },
-  },
-});
-
-app.get("/doc", Scalar({ url: "/doc/raw" }));
-
 // ~ ======= Export app ======= ~
 export default {
   fetch: app.fetch,

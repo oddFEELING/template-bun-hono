@@ -25,6 +25,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 // ~ ======= Register all module routes ======= ~
 import { apiConfig } from "@/config/api.config";
+import { Scalar } from "@scalar/hono-api-reference";
 
 const routes = getRegisteredRoutes();
 const { prefix: apiPrefix, defaultVersion } = apiConfig;
@@ -50,5 +51,49 @@ for (const route of routes) {
 }
 
 logger.info(`[ Routes ] Total: ${routes.length} modules registered\n`);
+
+// ~ ======= OpenAPI Documentation ======= ~
+app.doc("/doc/raw", {
+  openapi: "3.0.0",
+  info: {
+    version: "0.0.1",
+    title: "Naalya API",
+    description: "Naalya API server documentation",
+    contact: {
+      name: "Emmanuel Alawode",
+      url: "https://github.com/_oddfeeling",
+      email: "platforms@chowbea.com",
+    },
+  },
+});
+
+// ~ ======= OpenAPI download route ======= ~
+app.get("/doc/download", (c) => {
+  // Get the OpenAPI spec from the app
+  const openApiSpec = app.getOpenAPIDocument({
+    openapi: "3.0.0",
+    info: {
+      version: "0.0.1",
+      title: "Naalya API",
+      description: "Naalya API server documentation",
+      contact: {
+        name: "Emmanuel Alawode",
+        url: "https://github.com/_oddfeeling",
+        email: "platforms@chowbea.com",
+      },
+    },
+  });
+
+  // Set headers to force a file download in the browser
+  c.header("Content-Type", "application/json; charset=utf-8");
+  c.header("Content-Disposition", 'attachment; filename="openapi.json"');
+  c.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  c.header("Access-Control-Allow-Methods", "GET");
+
+  // Send the generated OpenAPI document with pretty formatting
+  return c.text(JSON.stringify(openApiSpec, null, 2));
+});
+
+app.get("/doc", Scalar({ url: "/doc/raw" }));
 
 export default app;
