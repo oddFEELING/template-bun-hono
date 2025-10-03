@@ -49,6 +49,7 @@ export function registerRoute(config: RouteConfig) {
  * @returns Array of all registered route configs
  */
 export function getRegisteredRoutes(): RouteConfig[] {
+  console.log("getRegisteredRoutes", RouteRegistry.keys());
   return Array.from(RouteRegistry.values());
 }
 
