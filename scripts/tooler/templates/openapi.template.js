@@ -36,7 +36,7 @@ const successSingleResponse = createSingleSchema(${varName}ResponseSchema);
 // ~ ======= Get All ${className}s Route ======= ~
 const getAll = createRoute({
   method: "get",
-  path: "/${moduleName}",
+  path: "/",
   tags: ["${className}"],
   summary: "Get all ${moduleName}",
   description: "Retrieves all ${moduleName} records from the database",
@@ -55,7 +55,7 @@ const getAll = createRoute({
 // ~ ======= Get All ${className}s Paginated Route ======= ~
 const getAllPaginated = createRoute({
   method: "get",
-  path: "/${moduleName}/paginated",
+  path: "/paginated",
   tags: ["${className}"],
   summary: "Get paginated ${moduleName}",
   description: "Retrieves paginated ${moduleName} records from the database",
@@ -77,7 +77,7 @@ const getAllPaginated = createRoute({
 // ~ ======= Get ${className} By ID Route ======= ~
 const getById = createRoute({
   method: "get",
-  path: "/${moduleName}/{id}",
+  path: "/{id}",
   tags: ["${className}"],
   summary: "Get ${moduleName} by ID",
   description: "Retrieves a single ${moduleName} record by its UUID",
@@ -107,7 +107,7 @@ const getById = createRoute({
 // ~ ======= Create ${className} Route ======= ~
 const create = createRoute({
   method: "post",
-  path: "/${moduleName}",
+  path: "/",
   tags: ["${className}"],
   summary: "Create ${moduleName}",
   description: "Creates a new ${moduleName} record in the database",
@@ -143,7 +143,7 @@ const create = createRoute({
 // ~ ======= Update ${className} Route ======= ~
 const update = createRoute({
   method: "patch",
-  path: "/${moduleName}/{id}",
+  path: "/{id}",
   tags: ["${className}"],
   summary: "Update ${moduleName}",
   description: "Updates an existing ${moduleName} record in the database",
@@ -188,7 +188,7 @@ const update = createRoute({
 // ~ ======= Delete ${className} Route ======= ~
 const deleteRoute = createRoute({
   method: "delete",
-  path: "/${moduleName}/{id}",
+  path: "/{id}",
   tags: ["${className}"],
   summary: "Delete ${moduleName}",
   description: "Deletes a ${moduleName} record from the database",

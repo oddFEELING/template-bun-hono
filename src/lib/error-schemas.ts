@@ -13,7 +13,7 @@ export const validationErrorSchema = z.object({
   error: z.object({
     type: z.literal("validation_error"),
     message: z.string(),
-    fields: z.record(z.array(z.string())),
+    fields: z.record(z.string(), z.array(z.string())),
   }),
 });
 

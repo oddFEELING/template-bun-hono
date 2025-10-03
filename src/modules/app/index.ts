@@ -5,7 +5,6 @@ import { AppLogger } from "@/lib/logger";
 import { getRegisteredRoutes } from "@/lib/route-registry";
 import type { AppEnv } from "@/lib/types";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { Scalar } from "@scalar/hono-api-reference";
 
 const logger = getService(AppLogger);
 
@@ -24,23 +23,6 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
-// ~ ======= OpenAPI Documentation ======= ~
-app.doc("/doc/raw", {
-  openapi: "3.0.0",
-  info: {
-    version: "0.0.1",
-    title: "Naalya API",
-    description: "Naalya API server documentation",
-    contact: {
-      name: "Emmanuel Alawode",
-      url: "https://github.com/_oddfeeling",
-      email: "platforms@chowbea.com",
-    },
-  },
-});
-
-app.get("/doc", Scalar({ url: "/doc/raw" }));
-
 // ~ ======= Register all module routes ======= ~
 import { apiConfig } from "@/config/api.config";
 
@@ -57,6 +39,9 @@ for (const route of routes) {
   if (route.middleware && route.middleware.length > 0) {
     app.use(fullPath, ...route.middleware);
   }
+
+  console.log("fullPath", fullPath);
+  console.log("route.router", route.router);
 
   // Register the router
   app.route(fullPath, route.router);

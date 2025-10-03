@@ -1,4 +1,4 @@
-import { toPascalCase } from "../utils/string.js";
+import { toPascalCase, toCamelCase } from "../utils/string.js";
 
 /**
  * Generates the service template file content

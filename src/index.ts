@@ -4,6 +4,7 @@ import "./_init";
 import "./_init-routes";
 
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 import {
   AppLogger,
   getServices,
@@ -27,6 +28,23 @@ app.get("/", (c) => {
     version: "1.0.0",
   });
 });
+
+// ~ ======= OpenAPI Documentation ======= ~
+app.doc("/doc/raw", {
+  openapi: "3.0.0",
+  info: {
+    version: "0.0.1",
+    title: "Chowbea API",
+    description: "ChowBea API server documentation",
+    contact: {
+      name: "Emmanuel Alawode",
+      url: "https://github.com/_oddfeeling",
+      email: "platforms@chowbea.com",
+    },
+  },
+});
+
+app.get("/doc", Scalar({ url: "/doc/raw" }));
 
 // ~ ======= Export app ======= ~
 export default {
