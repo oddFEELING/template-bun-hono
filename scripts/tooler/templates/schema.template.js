@@ -14,20 +14,24 @@ export function generateSchemaTemplate(moduleName) {
  * ${tableName} table schema
  * Drizzle ORM schema definition
  */
-export const ${tableVarName}Table = pgTable("${tableName}", {
+const ${tableVarName} = pgTable("${tableName}", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  // TODO: Add your columns here
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+
 });
 
 // ~ ======= Types ======= ~
-export type ${toPascalCase(
-    moduleName
-  )} = typeof ${tableVarName}Table.$inferSelect;
-export type New${toPascalCase(
-    moduleName
-  )} = typeof ${tableVarName}Table.$inferInsert;
+type ${toPascalCase(moduleName)} = typeof ${tableVarName}.$inferSelect;
+type New${toPascalCase(moduleName)} = typeof ${tableVarName}.$inferInsert;
+
+// ~ ======= Exports ======= ~
+export { ${tableVarName} };
+
+export type { ${toPascalCase(moduleName)}, New${toPascalCase(moduleName)}};
 `;
 }

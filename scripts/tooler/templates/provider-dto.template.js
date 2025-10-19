@@ -1,4 +1,4 @@
-import { toPascalCase } from "../utils/string.js";
+import { toCamelCase, toPascalCase } from "../utils/string.js";
 
 /**
  * Generates the provider DTO template file content
@@ -7,37 +7,65 @@ import { toPascalCase } from "../utils/string.js";
  */
 export function generateProviderDtoTemplate(providerName) {
   const className = toPascalCase(providerName);
-  return `import { z } from "zod";
+  const varName = toCamelCase(providerName);
+  return `import { z } from "@hono/zod-openapi";
 
 /**
  * ${className} Provider DTO schemas and types
- * Define interfaces for ${providerName} integration
  */
 
 // ~ ======= Configuration Schema ======= ~
-export const ${providerName}ConfigSchema = z.object({
-  apiKey: z.string().optional(),
-  apiSecret: z.string().optional(),
-  // TODO: Add your configuration fields here
-});
+const ${varName}ConfigSchema = z
+  .object({
+    apiKey: z.string().optional().openapi({
+      description: "API key for ${providerName} service",
+    }),
+    apiSecret: z.string().optional().openapi({
+      description: "API secret for ${providerName} service",
+    }),
+  })
+  .openapi("${className}Config");
 
 // ~ ======= Request Schemas ======= ~
-export const ${providerName}RequestSchema = z.object({
-  action: z.string(),
-  // TODO: Add your request fields here
-});
+const ${varName}RequestSchema = z
+  .object({
+    action: z.string().openapi({
+      description: "Action to perform with ${providerName}",
+    }),
+  })
+  .openapi("${className}Request");
 
 // ~ ======= Response Schemas ======= ~
-export const ${providerName}ResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.any().optional(),
-  error: z.string().optional(),
-  // TODO: Add your response fields here
-});
+const ${varName}ResponseSchema = z
+  .object({
+    success: z.boolean().openapi({
+      description: "Whether the operation was successful",
+    }),
+    data: z.any().optional().openapi({
+      description: "Response data from ${providerName}",
+    }),
+    error: z.string().optional().openapi({
+      description: "Error message if operation failed",
+    }),
+  })
+  .openapi("${className}Response");
 
 // ~ ======= TypeScript Types ======= ~
-export type ${className}Config = z.infer<typeof ${providerName}ConfigSchema>;
-export type ${className}Request = z.infer<typeof ${providerName}RequestSchema>;
-export type ${className}Response = z.infer<typeof ${providerName}ResponseSchema>;
+type ${varName}Config = z.infer<typeof ${varName}ConfigSchema>;
+type ${varName}Request = z.infer<typeof ${varName}RequestSchema>;
+type ${varName}Response = z.infer<typeof ${varName}ResponseSchema>;
+
+// ~ ======= Exports ======= ~
+export {
+  ${varName}ConfigSchema,
+    ${varName}RequestSchema,
+  ${varName}ResponseSchema,
+};
+
+export type {
+  ${varName}Config,
+  ${varName}Request,
+  ${varName}Response,
+};
 `;
 }

@@ -14,6 +14,7 @@ import {
   create${className}Schema,
   update${className}Schema,
   query${className}Schema,
+  ${varName}EntitySchema,
   ${varName}ResponseSchema,
 } from "../interfaces/${moduleName}.dto";
 import {
@@ -37,6 +38,7 @@ const successSingleResponse = createSingleSchema(${varName}ResponseSchema);
 const getAll = createRoute({
   method: "get",
   path: "/",
+  operationId: "getAll${className}",
   tags: ["${className}"],
   summary: "Get all ${moduleName}",
   description: "Retrieves all ${moduleName} records from the database",
@@ -56,6 +58,7 @@ const getAll = createRoute({
 const getAllPaginated = createRoute({
   method: "get",
   path: "/paginated",
+  operationId: "getAll${className}Paginated",
   tags: ["${className}"],
   summary: "Get paginated ${moduleName}",
   description: "Retrieves paginated ${moduleName} records from the database",
@@ -78,6 +81,7 @@ const getAllPaginated = createRoute({
 const getById = createRoute({
   method: "get",
   path: "/{id}",
+  operationId: "get${className}ById",
   tags: ["${className}"],
   summary: "Get ${moduleName} by ID",
   description: "Retrieves a single ${moduleName} record by its UUID",
@@ -108,6 +112,7 @@ const getById = createRoute({
 const create = createRoute({
   method: "post",
   path: "/",
+  operationId: "create${className}",
   tags: ["${className}"],
   summary: "Create ${moduleName}",
   description: "Creates a new ${moduleName} record in the database",
@@ -144,6 +149,7 @@ const create = createRoute({
 const update = createRoute({
   method: "patch",
   path: "/{id}",
+  operationId: "update${className}",
   tags: ["${className}"],
   summary: "Update ${moduleName}",
   description: "Updates an existing ${moduleName} record in the database",
@@ -189,6 +195,7 @@ const update = createRoute({
 const deleteRoute = createRoute({
   method: "delete",
   path: "/{id}",
+  operationId: "delete${className}",
   tags: ["${className}"],
   summary: "Delete ${moduleName}",
   description: "Deletes a ${moduleName} record from the database",
