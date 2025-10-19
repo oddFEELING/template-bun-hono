@@ -21,7 +21,7 @@ export function generateServiceTemplate(moduleName, visibility = "private") {
   return `import { Service } from "@/decorators";
 import { AppLogger } from "@/lib/logger";
 import db from "@/drizzle/db";
-import { ${tableVarName}Table } from "./entities/${moduleName}.schema";
+import { ${tableVarName} } from "./entities/${moduleName}.schema";
 import type { Create${className}DTO, Update${className}DTO, Query${className}DTO } from "./interfaces/${moduleName}.dto";
 import { eq } from "drizzle-orm";
 
@@ -42,7 +42,7 @@ export class ${className}Service {
    */
   async getAll() {
     this.logger.info("Fetching all ${moduleName}");
-    const results = await db.select().from(${tableVarName}Table);
+    const results = await db.select().from(${tableVarName});
     return results;
   }
 
@@ -59,7 +59,7 @@ export class ${className}Service {
 
     const results = await db
       .select()
-      .from(${tableVarName}Table)
+      .from(${tableVarName})
       .limit(limit)
       .offset(offset);
 
@@ -75,8 +75,8 @@ export class ${className}Service {
     this.logger.info(\`Fetching ${moduleName} with ID: \${id}\`);
     const result = await db
       .select()
-      .from(${tableVarName}Table)
-      .where(eq(${tableVarName}Table.id, id))
+      .from(${tableVarName})
+      .where(eq(${tableVarName}.id, id))
       .limit(1);
 
     return result[0] || null;
@@ -90,7 +90,7 @@ export class ${className}Service {
   async create(data: Create${className}DTO) {
     this.logger.info(\`Creating new ${moduleName}: \${JSON.stringify(data)}\`);
     const result = await db
-      .insert(${tableVarName}Table)
+      .insert(${tableVarName})
       .values(data)
       .returning();
 
@@ -106,9 +106,9 @@ export class ${className}Service {
   async update(id: string, data: Update${className}DTO) {
     this.logger.info(\`Updating ${moduleName} with ID: \${id}\`);
     const result = await db
-      .update(${tableVarName}Table)
+      .update(${tableVarName})
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(${tableVarName}Table.id, id))
+      .where(eq(${tableVarName}.id, id))
       .returning();
 
     return result[0] || null;
@@ -122,8 +122,8 @@ export class ${className}Service {
   async delete(id: string) {
     this.logger.info(\`Deleting ${moduleName} with ID: \${id}\`);
     const result = await db
-      .delete(${tableVarName}Table)
-      .where(eq(${tableVarName}Table.id, id))
+      .delete(${tableVarName})
+      .where(eq(${tableVarName}.id, id))
       .returning();
 
     return result[0] || null;

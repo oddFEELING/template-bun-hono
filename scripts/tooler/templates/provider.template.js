@@ -37,7 +37,7 @@ export class ${className}Provider {
    */
   async initialize() {
     this.logger.info("Initializing ${className}Provider");
-    // TODO: Add initialization logic here
+
   }
 
   /**
@@ -45,7 +45,6 @@ export class ${className}Provider {
    */
   async performAction() {
     this.logger.info("${className}Provider performing action");
-    // TODO: Implement your integration logic here
     return { success: true };
   }
 
@@ -55,7 +54,6 @@ export class ${className}Provider {
    */
   async disconnect() {
     this.logger.info("Disconnecting ${className}Provider");
-    // TODO: Add cleanup logic here
   }
 }
 `;

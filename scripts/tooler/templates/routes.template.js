@@ -88,18 +88,18 @@ ${varName}Router.openapi(${varName}Routes.delete, async (c) => {
 });
 
 // ~ ======= Route Configuration ======= ~
-export const ${varName}RouteConfig: RouteConfig = {
+const ${varName}RouteConfig: RouteConfig = {
   router: ${varName}Router,
   prefix: "/${moduleName}",
   version: "${version}",
   moduleName: "${className}",
-  // middleware: [], // Add module-specific middleware here if needed
 };
 
 // ~ ======= Register route ======= ~
 registerRoute(${varName}RouteConfig);
 
-// ~ ======= Export router (for testing or manual use) ======= ~
+// ~ ======= Exports ======= ~
+export { ${varName}RouteConfig };
 export default ${varName}Router;
 `;
 }
