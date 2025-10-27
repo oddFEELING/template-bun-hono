@@ -3,27 +3,29 @@
 import { watch } from "fs";
 import { join, resolve } from "path";
 import { generateModuleList } from "./generate-module-list";
+import { generateSchemaList } from "./generate-schema-list";
 
 /**
  * Watches for changes in modules and providers directories
- * and regenerates the module list when changes occur
+ * and regenerates module and schema lists when changes occur
  */
 
 const projectRoot = resolve(import.meta.dir, "..");
 const modulesDir = join(projectRoot, "src", "modules");
 const providersDir = join(projectRoot, "src", "providers");
 
-let debounceTimer: Timer | null = null;
+let moduleDebounceTimer: Timer | null = null;
+let schemaDebounceTimer: Timer | null = null;
 
 /**
- * Debounced regeneration to avoid multiple rapid regenerations
+ * Debounced module list regeneration
  */
-function debouncedRegenerate() {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
+function debouncedRegenerateModules() {
+  if (moduleDebounceTimer) {
+    clearTimeout(moduleDebounceTimer);
   }
 
-  debounceTimer = setTimeout(() => {
+  moduleDebounceTimer = setTimeout(() => {
     console.log("\n📦 Module structure changed, regenerating module list...");
     try {
       generateModuleList();
@@ -33,33 +35,77 @@ function debouncedRegenerate() {
   }, 500);
 }
 
-console.log("👀 Watching for module and provider changes...");
+/**
+ * Debounced schema list regeneration
+ */
+function debouncedRegenerateSchemas() {
+  if (schemaDebounceTimer) {
+    clearTimeout(schemaDebounceTimer);
+  }
+
+  schemaDebounceTimer = setTimeout(() => {
+    console.log("\n📋 DTO file changed, regenerating schema list...");
+    try {
+      generateSchemaList();
+    } catch (error) {
+      console.error("❌ Error regenerating schema list:", error);
+    }
+  }, 500);
+}
+
+console.log("👀 Watching for changes...");
 console.log(`   Modules: ${modulesDir}`);
 console.log(`   Providers: ${providersDir}`);
+console.log(`   DTO files: ${modulesDir}/**/interfaces/*.dto.ts`);
+console.log(`   DTO files: ${providersDir}/**/interfaces/*.dto.ts`);
 console.log("   Press Ctrl+C to stop\n");
 
-// Watch modules directory
+// Watch modules directory for new/removed modules
 try {
   watch(modulesDir, { recursive: false }, (eventType, filename) => {
     if (filename && eventType === "rename") {
-      // Directory was added or removed
-      debouncedRegenerate();
+      // Module directory was added or removed
+      debouncedRegenerateModules();
     }
   });
 } catch (error) {
   console.warn("⚠️  Could not watch modules directory:", error);
 }
 
-// Watch providers directory
+// Watch providers directory for new/removed providers
 try {
   watch(providersDir, { recursive: false }, (eventType, filename) => {
     if (filename && eventType === "rename") {
-      // Directory was added or removed
-      debouncedRegenerate();
+      // Provider directory was added or removed
+      debouncedRegenerateModules();
     }
   });
 } catch (error) {
   console.warn("⚠️  Could not watch providers directory:", error);
+}
+
+// Watch for DTO file changes in modules
+try {
+  watch(modulesDir, { recursive: true }, (eventType, filename) => {
+    if (filename && filename.endsWith(".dto.ts")) {
+      // DTO file was added, modified, or removed
+      debouncedRegenerateSchemas();
+    }
+  });
+} catch (error) {
+  console.warn("⚠️  Could not watch modules DTO files:", error);
+}
+
+// Watch for DTO file changes in providers
+try {
+  watch(providersDir, { recursive: true }, (eventType, filename) => {
+    if (filename && filename.endsWith(".dto.ts")) {
+      // DTO file was added, modified, or removed
+      debouncedRegenerateSchemas();
+    }
+  });
+} catch (error) {
+  console.warn("⚠️  Could not watch providers DTO files:", error);
 }
 
 // Keep the process alive

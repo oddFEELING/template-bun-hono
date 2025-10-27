@@ -1,4 +1,4 @@
-import { toPascalCase, toCamelCase } from "../utils/string.js";
+import { toCamelCase, toPascalCase } from "../utils/string.js";
 
 /**
  * Generates the service template file content
@@ -22,7 +22,9 @@ export function generateServiceTemplate(moduleName, visibility = "private") {
 import { AppLogger } from "@/lib/logger";
 import db from "@/drizzle/db";
 import { ${tableVarName} } from "./entities/${moduleName}.schema";
-import type { Create${className}DTO, Update${className}DTO, Query${className}DTO } from "./interfaces/${moduleName}.dto";
+import type { Create${className}RequestDTO } from "./interfaces/create${className}.dto";
+import type { Update${className}RequestDTO } from "./interfaces/update${className}.dto";
+import type { List${className}sQueryDTO } from "./interfaces/list${className}s.dto";
 import { eq } from "drizzle-orm";
 
 /**
@@ -51,7 +53,7 @@ export class ${className}Service {
    * @param query - Pagination parameters (page, limit)
    * @returns Paginated array of ${moduleName} records
    */
-  async getAllPaginated(query: Query${className}DTO) {
+  async getAllPaginated(query: List${className}sQueryDTO) {
     this.logger.info(\`Fetching paginated ${moduleName} - Page: \${query.page}, Limit: \${query.limit}\`);
     const page = parseInt(query.page);
     const limit = parseInt(query.limit);
@@ -87,7 +89,7 @@ export class ${className}Service {
    * @param data - The data for creating a new ${moduleName}
    * @returns The newly created ${moduleName} record
    */
-  async create(data: Create${className}DTO) {
+  async create(data: Create${className}RequestDTO) {
     this.logger.info(\`Creating new ${moduleName}: \${JSON.stringify(data)}\`);
     const result = await db
       .insert(${tableVarName})
@@ -103,7 +105,7 @@ export class ${className}Service {
    * @param data - The data to update
    * @returns The updated ${moduleName} record or null if not found
    */
-  async update(id: string, data: Update${className}DTO) {
+  async update(id: string, data: Update${className}RequestDTO) {
     this.logger.info(\`Updating ${moduleName} with ID: \${id}\`);
     const result = await db
       .update(${tableVarName})

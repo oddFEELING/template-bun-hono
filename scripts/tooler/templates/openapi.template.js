@@ -8,69 +8,56 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
 export function generateOpenApiTemplate(moduleName) {
   const className = toPascalCase(moduleName);
   const varName = toCamelCase(moduleName);
-  return `import { createRoute, z } from "@hono/zod-openapi";
+  return `import { createRoute } from "@hono/zod-openapi";
+import { idParamSchema } from "../interfaces/${moduleName}.dto";
 import {
-  idParamSchema,
-  create${className}Schema,
-  update${className}Schema,
-  query${className}Schema,
-  ${varName}EntitySchema,
-  ${varName}ResponseSchema,
-} from "../interfaces/${moduleName}.dto";
+  create${className}RequestSchema,
+  create${className}ResponseSchema,
+} from "../interfaces/create${className}.dto";
+import {
+  update${className}RequestSchema,
+  update${className}ResponseSchema,
+} from "../interfaces/update${className}.dto";
+import { get${className}ResponseSchema } from "../interfaces/get${className}.dto";
+import {
+  list${className}sQuerySchema,
+  list${className}sResponseSchema,
+} from "../interfaces/list${className}s.dto";
+import { delete${className}ResponseSchema } from "../interfaces/delete${className}.dto";
 import {
   validationErrorSchema,
   notFoundErrorSchema,
 } from "@/lib/error-schemas";
-import {
-  createListSchema,
-  createSingleSchema,
-} from "@/lib/response-schemas";
+import { createSingleSchema } from "@/lib/response-schemas";
 
 /**
  * OpenAPI route definitions for ${moduleName}
  */
 
-// ~ ======= Response Schemas ======= ~
-const successListResponse = createListSchema(${varName}ResponseSchema);
-const successSingleResponse = createSingleSchema(${varName}ResponseSchema);
+// ~ ======= Response Wrappers ======= ~
+const get${className}SuccessResponse = createSingleSchema(get${className}ResponseSchema);
+const create${className}SuccessResponse = createSingleSchema(create${className}ResponseSchema);
+const update${className}SuccessResponse = createSingleSchema(update${className}ResponseSchema);
+const list${className}sSuccessResponse = createSingleSchema(list${className}sResponseSchema);
+const delete${className}SuccessResponse = createSingleSchema(delete${className}ResponseSchema);
 
-// ~ ======= Get All ${className}s Route ======= ~
+// ~ ======= List All ${className}s Route (with pagination) ======= ~
 const getAll = createRoute({
   method: "get",
   path: "/",
-  operationId: "getAll${className}",
+  operationId: "list${className}s",
   tags: ["${className}"],
-  summary: "Get all ${moduleName}",
-  description: "Retrieves all ${moduleName} records from the database",
-  responses: {
-    200: {
-      description: "Successfully retrieved all ${moduleName}",
-      content: {
-        "application/json": {
-          schema: successListResponse,
-        },
-      },
-    },
-  },
-});
-
-// ~ ======= Get All ${className}s Paginated Route ======= ~
-const getAllPaginated = createRoute({
-  method: "get",
-  path: "/paginated",
-  operationId: "getAll${className}Paginated",
-  tags: ["${className}"],
-  summary: "Get paginated ${moduleName}",
+  summary: "List all ${moduleName}s with pagination",
   description: "Retrieves paginated ${moduleName} records from the database",
   request: {
-    query: query${className}Schema,
+    query: list${className}sQuerySchema,
   },
   responses: {
     200: {
-      description: "Successfully retrieved paginated ${moduleName}",
+      description: "Successfully retrieved paginated ${moduleName}s",
       content: {
         "application/json": {
-          schema: successListResponse,
+          schema: list${className}sSuccessResponse,
         },
       },
     },
@@ -93,7 +80,7 @@ const getById = createRoute({
       description: "Successfully retrieved ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: get${className}SuccessResponse,
         },
       },
     },
@@ -120,7 +107,7 @@ const create = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: create${className}Schema,
+          schema: create${className}RequestSchema,
         },
       },
     },
@@ -130,7 +117,7 @@ const create = createRoute({
       description: "Successfully created ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: create${className}SuccessResponse,
         },
       },
     },
@@ -158,7 +145,7 @@ const update = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: update${className}Schema,
+          schema: update${className}RequestSchema,
         },
       },
     },
@@ -168,7 +155,7 @@ const update = createRoute({
       description: "Successfully updated ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: update${className}SuccessResponse,
         },
       },
     },
@@ -207,7 +194,7 @@ const deleteRoute = createRoute({
       description: "Successfully deleted ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: delete${className}SuccessResponse,
         },
       },
     },
@@ -225,7 +212,6 @@ const deleteRoute = createRoute({
 // ~ ======= Export all routes ======= ~
 export const ${varName}Routes = {
   getAll,
-  getAllPaginated,
   getById,
   create,
   update,

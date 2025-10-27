@@ -3,8 +3,10 @@ import { formatValidationError } from "@/lib/format-validation-error";
 import { getService } from "@/lib/get-service";
 import { AppLogger } from "@/lib/logger";
 import { getRegisteredRoutes } from "@/lib/route-registry";
+import { autoRegisterSchemas } from "@/lib/schema-auto-discovery";
 import type { AppEnv } from "@/lib/types";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 
 const logger = getService(AppLogger);
 
@@ -25,7 +27,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 
 // ~ ======= Register all module routes ======= ~
 import { apiConfig } from "@/config/api.config";
-import { Scalar } from "@scalar/hono-api-reference";
+import { logRegisteredSchemas } from "@/lib/log-schemas";
 
 const routes = getRegisteredRoutes();
 const { prefix: apiPrefix, defaultVersion } = apiConfig;
@@ -41,9 +43,7 @@ for (const route of routes) {
     app.use(fullPath, ...route.middleware);
   }
 
-  console.log("fullPath", fullPath);
-  console.log("route.router", route.router);
-
+  
   // Register the router
   app.route(fullPath, route.router);
 
@@ -52,13 +52,19 @@ for (const route of routes) {
 
 logger.info(`[ Routes ] Total: ${routes.length} modules registered\n`);
 
+// ~ ======= Auto-discover and register schemas ======= ~
+await autoRegisterSchemas(app);
+
+// ~ ======= Log registered schemas ======= ~
+logRegisteredSchemas(logger);
+
 // ~ ======= OpenAPI Documentation ======= ~
 app.doc("/doc/raw", {
   openapi: "3.0.0",
   info: {
     version: "0.0.1",
-    title: "Naalya API",
-    description: "Naalya API server documentation",
+    title: "My API Template",
+    description: "My API Template server documentation",
     contact: {
       name: "Emmanuel Alawode",
       url: "https://github.com/_oddfeeling",
@@ -74,8 +80,8 @@ app.get("/doc/download", (c) => {
     openapi: "3.0.0",
     info: {
       version: "0.0.1",
-      title: "Naalya API",
-      description: "Naalya API server documentation",
+      title: "My API Template",
+      description: "My API Template server documentation",
       contact: {
         name: "Emmanuel Alawode",
         url: "https://github.com/_oddfeeling",

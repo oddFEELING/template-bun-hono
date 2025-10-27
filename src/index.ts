@@ -32,6 +32,6 @@ app.get("/", (c) => {
 // ~ ======= Export app ======= ~
 export default {
   fetch: app.fetch,
-  port: 8000,
+  port: 8001,
   idleTimeout: 0,
 };

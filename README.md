@@ -1,4 +1,6 @@
-# Naalya API
+# Hono Bun Template: Opinionated
+
+### Note: There are heavy abstractiosn in this template and the conventions are moderately enforced.
 
 A NestJS-inspired API framework built with Hono, TypeScript, and Bun. Features automatic service discovery, granular access control, and powerful code generation.
 

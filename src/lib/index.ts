@@ -24,3 +24,11 @@ export * from "./response-schemas";
 // Routing
 export * from "./log-services";
 export * from "./route-registry";
+export * from "./schema-auto-discovery";
+export * from "./log-schemas";
+export * from "./schema-registry";
+
+export type {
+  SchemaIdentifier,
+  SchemaRegistryType,
+} from "../_generated/schemas";
