@@ -7,70 +7,70 @@ import { z } from "zod";
 
 // ~ ======= Validation Error Schema (422) ======= ~
 export const validationErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.literal(422),
-  error: z.object({
-    type: z.literal("validation_error"),
-    message: z.string(),
-    fields: z.record(z.string(), z.array(z.string())),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.literal(422),
+	error: z.object({
+		type: z.literal("validation_error"),
+		message: z.string(),
+		fields: z.record(z.string(), z.array(z.string())),
+	}),
 });
 
 // ~ ======= Not Found Error Schema (404) ======= ~
 export const notFoundErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.literal(404),
-  error: z.object({
-    type: z.literal("not_found"),
-    message: z.string(),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.literal(404),
+	error: z.object({
+		type: z.literal("not_found"),
+		message: z.string(),
+	}),
 });
 
 // ~ ======= Unauthorized Error Schema (401) ======= ~
 export const unauthorizedErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.literal(401),
-  error: z.object({
-    type: z.literal("unauthorized"),
-    message: z.string(),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.literal(401),
+	error: z.object({
+		type: z.literal("unauthorized"),
+		message: z.string(),
+	}),
 });
 
 // ~ ======= Forbidden Error Schema (403) ======= ~
 export const forbiddenErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.literal(403),
-  error: z.object({
-    type: z.literal("forbidden"),
-    message: z.string(),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.literal(403),
+	error: z.object({
+		type: z.literal("forbidden"),
+		message: z.string(),
+	}),
 });
 
 // ~ ======= Server Error Schema (500) ======= ~
 export const serverErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.number(),
-  error: z.object({
-    type: z.string(),
-    message: z.string(),
-    details: z.any().optional(),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.number(),
+	error: z.object({
+		type: z.string(),
+		message: z.string(),
+		details: z.any().optional(),
+	}),
 });
 
 // ~ ======= Generic Error Schema ======= ~
 export const genericErrorSchema = z.object({
-  success: z.literal(false),
-  data: z.null(),
-  status: z.number(),
-  error: z.object({
-    type: z.string(),
-    message: z.string(),
-  }),
+	success: z.literal(false),
+	data: z.null(),
+	status: z.number(),
+	error: z.object({
+		type: z.string(),
+		message: z.string(),
+	}),
 });
 
 // ~ ======= TypeScript Types ======= ~

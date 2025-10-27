@@ -7,20 +7,20 @@ import type { AppEnv } from "./types";
  * Defines the structure for registering module routes
  */
 export interface RouteConfig {
-  /** The router instance containing all route handlers */
-  router: OpenAPIHono<AppEnv>;
+	/** The router instance containing all route handlers */
+	router: OpenAPIHono<AppEnv>;
 
-  /** Route prefix (e.g., "/users", "/products") */
-  prefix: string;
+	/** Route prefix (e.g., "/users", "/products") */
+	prefix: string;
 
-  /** API version (defaults to "v1") */
-  version?: string;
+	/** API version (defaults to "v1") */
+	version?: string;
 
-  /** Module-specific middleware to apply to all routes */
-  middleware?: MiddlewareHandler[];
+	/** Module-specific middleware to apply to all routes */
+	middleware?: MiddlewareHandler[];
 
-  /** Module name for logging purposes */
-  moduleName: string;
+	/** Module name for logging purposes */
+	moduleName: string;
 }
 
 /**
@@ -34,14 +34,13 @@ export const RouteRegistry = new Map<string, RouteConfig>();
  * @param config - The route configuration to register
  */
 export function registerRoute(config: RouteConfig) {
-  const key = `${config.version || "v1"}:${config.prefix}`;
+	const key = `${config.version || "v1"}:${config.prefix}`;
 
-  if (RouteRegistry.has(key)) {
-    console.warn(`Route ${key} already registered. Skipping duplicate.`);
-    return;
-  }
+	if (RouteRegistry.has(key)) {
+		return;
+	}
 
-  RouteRegistry.set(key, config);
+	RouteRegistry.set(key, config);
 }
 
 /**
@@ -49,8 +48,7 @@ export function registerRoute(config: RouteConfig) {
  * @returns Array of all registered route configs
  */
 export function getRegisteredRoutes(): RouteConfig[] {
-  console.log("getRegisteredRoutes", RouteRegistry.keys());
-  return Array.from(RouteRegistry.values());
+	return Array.from(RouteRegistry.values());
 }
 
 /**
@@ -58,5 +56,5 @@ export function getRegisteredRoutes(): RouteConfig[] {
  * Useful for testing purposes
  */
 export function clearRouteRegistry() {
-  RouteRegistry.clear();
+	RouteRegistry.clear();
 }

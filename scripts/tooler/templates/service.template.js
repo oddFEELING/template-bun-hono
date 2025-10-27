@@ -7,18 +7,18 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The service template content
  */
 export function generateServiceTemplate(moduleName, visibility = "private") {
-  const className = toPascalCase(moduleName);
-  const tableVarName = toCamelCase(moduleName);
-  const decorator =
-    visibility === "public"
-      ? `@Service({ visibility: "public" })`
-      : `@Service()`;
-  const visibilityComment =
-    visibility === "public"
-      ? "Public service - accessible from other modules"
-      : "Private service - only accessible within this module";
+	const className = toPascalCase(moduleName);
+	const tableVarName = toCamelCase(moduleName);
+	const decorator =
+		visibility === "public"
+			? `@Service({ visibility: "public" })`
+			: "@Service()";
+	const visibilityComment =
+		visibility === "public"
+			? "Public service - accessible from other modules"
+			: "Private service - only accessible within this module";
 
-  return `import { Service } from "@/decorators";
+	return `import { Service } from "@/decorators";
 import { AppLogger } from "@/lib/logger";
 import db from "@/drizzle/db";
 import { ${tableVarName} } from "./entities/${moduleName}.schema";

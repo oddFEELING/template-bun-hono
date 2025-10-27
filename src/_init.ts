@@ -10,13 +10,13 @@ const glob = new Bun.Glob("**/*.service.ts");
 
 // Scan for service files starting from the src directory
 const serviceFiles = glob.scanSync({
-  cwd: import.meta.dir,
-  absolute: true,
+	cwd: import.meta.dir,
+	absolute: true,
 });
 
 // Import each service file to trigger the @Service decorator
 for (const file of serviceFiles) {
-  await import(file);
+	await import(file);
 }
 
 // Export to make this file a module and allow top-level await

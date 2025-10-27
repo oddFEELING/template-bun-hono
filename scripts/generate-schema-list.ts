@@ -1,13 +1,13 @@
 #!/usr/bin/env bun
 
 import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from "fs";
-import { join, resolve } from "path";
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import { join, resolve } from "node:path";
 
 /**
  * Generates a type-safe list of all schemas in the application
@@ -23,116 +23,116 @@ const outputFile = join(outputDir, "schemas.ts");
  * Recursively scans directories for DTO files
  */
 function findDtoFiles(dir: string, files: string[] = []): string[] {
-  if (!existsSync(dir)) {
-    return files;
-  }
+	if (!existsSync(dir)) {
+		return files;
+	}
 
-  try {
-    const items = readdirSync(dir, { withFileTypes: true });
+	try {
+		const items = readdirSync(dir, { withFileTypes: true });
 
-    for (const item of items) {
-      const fullPath = join(dir, item.name);
+		for (const item of items) {
+			const fullPath = join(dir, item.name);
 
-      if (item.isDirectory() && !item.name.startsWith(".")) {
-        // Recursively scan subdirectories
-        findDtoFiles(fullPath, files);
-      } else if (item.name.endsWith(".dto.ts")) {
-        files.push(fullPath);
-      }
-    }
-  } catch (error) {
-    console.error(`Error reading directory ${dir}:`, error);
-  }
+			if (item.isDirectory() && !item.name.startsWith(".")) {
+				// Recursively scan subdirectories
+				findDtoFiles(fullPath, files);
+			} else if (item.name.endsWith(".dto.ts")) {
+				files.push(fullPath);
+			}
+		}
+	} catch (error) {
+		console.error(`Error reading directory ${dir}:`, error);
+	}
 
-  return files;
+	return files;
 }
 
 /**
  * Extracts schema names and file info from a DTO file
  */
 function extractSchemaInfo(filePath: string): Array<{
-  name: string;
-  filePath: string;
-  relativePath: string;
+	name: string;
+	filePath: string;
+	relativePath: string;
 }> {
-  try {
-    const content = readFileSync(filePath, "utf-8");
-    const schemaInfos: Array<{
-      name: string;
-      filePath: string;
-      relativePath: string;
-    }> = [];
+	try {
+		const content = readFileSync(filePath, "utf-8");
+		const schemaInfos: Array<{
+			name: string;
+			filePath: string;
+			relativePath: string;
+		}> = [];
 
-    // Match: const schemaName = ... (must end with "Schema")
-    const matches = content.matchAll(/const\s+(\w+Schema)\s*=/g);
+		// Match: const schemaName = ... (must end with "Schema")
+		const matches = content.matchAll(/const\s+(\w+Schema)\s*=/g);
 
-    // Convert absolute path to relative import path
-    const relativePath = filePath
-      .replace(projectRoot + "/src/", "@/")
-      .replace(".ts", "");
+		// Convert absolute path to relative import path
+		const relativePath = filePath
+			.replace(`${projectRoot}/src/`, "@/")
+			.replace(".ts", "");
 
-    for (const match of matches) {
-      schemaInfos.push({
-        name: match[1],
-        filePath,
-        relativePath,
-      });
-    }
+		for (const match of matches) {
+			schemaInfos.push({
+				name: match[1],
+				filePath,
+				relativePath,
+			});
+		}
 
-    return schemaInfos;
-  } catch (error) {
-    console.error(`Error reading file ${filePath}:`, error);
-    return [];
-  }
+		return schemaInfos;
+	} catch (error) {
+		console.error(`Error reading file ${filePath}:`, error);
+		return [];
+	}
 }
 
 /**
  * Generates the schema list TypeScript file
  */
 export function generateSchemaList() {
-  console.log("🔍 Scanning for schemas in DTO files...");
+	console.log("🔍 Scanning for schemas in DTO files...");
 
-  // Find all DTO files
-  const dtoFiles = findDtoFiles(srcDir);
-  console.log(`   Found ${dtoFiles.length} DTO files`);
+	// Find all DTO files
+	const dtoFiles = findDtoFiles(srcDir);
+	console.log(`   Found ${dtoFiles.length} DTO files`);
 
-  // Extract all schema info
-  const allSchemaInfos: Array<{
-    name: string;
-    filePath: string;
-    relativePath: string;
-  }> = [];
+	// Extract all schema info
+	const allSchemaInfos: Array<{
+		name: string;
+		filePath: string;
+		relativePath: string;
+	}> = [];
 
-  for (const file of dtoFiles) {
-    const schemaInfos = extractSchemaInfo(file);
-    allSchemaInfos.push(...schemaInfos);
-  }
+	for (const file of dtoFiles) {
+		const schemaInfos = extractSchemaInfo(file);
+		allSchemaInfos.push(...schemaInfos);
+	}
 
-  // Remove duplicates by name and sort
-  const uniqueSchemas = [
-    ...new Map(allSchemaInfos.map((s) => [s.name, s])).values(),
-  ].sort((a, b) => a.name.localeCompare(b.name));
+	// Remove duplicates by name and sort
+	const uniqueSchemas = [
+		...new Map(allSchemaInfos.map((s) => [s.name, s])).values(),
+	].sort((a, b) => a.name.localeCompare(b.name));
 
-  console.log(`   Extracted ${uniqueSchemas.length} unique schemas`);
+	console.log(`   Extracted ${uniqueSchemas.length} unique schemas`);
 
-  // Group schemas by file for imports
-  const schemasByFile = new Map<string, string[]>();
-  for (const schema of uniqueSchemas) {
-    if (!schemasByFile.has(schema.relativePath)) {
-      schemasByFile.set(schema.relativePath, []);
-    }
-    schemasByFile.get(schema.relativePath)!.push(schema.name);
-  }
+	// Group schemas by file for imports
+	const schemasByFile = new Map<string, string[]>();
+	for (const schema of uniqueSchemas) {
+		if (!schemasByFile.has(schema.relativePath)) {
+			schemasByFile.set(schema.relativePath, []);
+		}
+		schemasByFile.get(schema.relativePath)?.push(schema.name);
+	}
 
-  // Generate import statements
-  const imports = Array.from(schemasByFile.entries())
-    .map(
-      ([path, names]) => `import type { ${names.join(", ")} } from "${path}";`
-    )
-    .join("\n");
+	// Generate import statements
+	const imports = Array.from(schemasByFile.entries())
+		.map(
+			([path, names]) => `import type { ${names.join(", ")} } from "${path}";`
+		)
+		.join("\n");
 
-  // Generate TypeScript content
-  const content = `/**
+	// Generate TypeScript content
+	const content = `/**
  * AUTO-GENERATED FILE - DO NOT EDIT MANUALLY
  * Generated by: scripts/generate-schema-list.ts
  * Generated at: ${new Date().toISOString()}
@@ -165,8 +165,8 @@ export type SchemaIdentifier = typeof AVAILABLE_SCHEMAS[number];
  */
 export type SchemaTypeMap = {
 ${uniqueSchemas
-  .map((s) => `  "${s.name}": z.infer<typeof ${s.name}>;`)
-  .join("\n")}
+	.map((s) => `  "${s.name}": z.infer<typeof ${s.name}>;`)
+	.join("\n")}
 };
 
 /**
@@ -194,15 +194,15 @@ export function validateSchemas(identifiers: string[]): string[] {
 }
 `;
 
-  // Ensure output directory exists
-  if (!existsSync(outputDir)) {
-    mkdirSync(outputDir, { recursive: true });
-  }
+	// Ensure output directory exists
+	if (!existsSync(outputDir)) {
+		mkdirSync(outputDir, { recursive: true });
+	}
 
-  // Write the file
-  writeFileSync(outputFile, content, "utf-8");
-  console.log(`✅ Generated schema list at: src/_generated/schemas.ts`);
-  console.log(`   Total schemas: ${uniqueSchemas.length}`);
+	// Write the file
+	writeFileSync(outputFile, content, "utf-8");
+	console.log("✅ Generated schema list at: src/_generated/schemas.ts");
+	console.log(`   Total schemas: ${uniqueSchemas.length}`);
 }
 
 // Generate on script execution

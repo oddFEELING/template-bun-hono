@@ -3,32 +3,27 @@
  * Framework-level utilities and helpers
  */
 
-// Types
-export * from "./types";
+export type {
+	SchemaIdentifier,
+	SchemaRegistryType,
+} from "../_generated/schemas";
 
 // Authentication
 export * from "./auth";
-
-// Dependency Injection
-export * from "./get-service";
-
-// Logging
-export * from "./logger";
-
 // Response utilities
 export * from "./error-schemas";
 export * from "./format-validation-error";
-export * from "./response-helpers";
-export * from "./response-schemas";
-
+// Dependency Injection
+export * from "./get-service";
+export * from "./log-schemas";
 // Routing
 export * from "./log-services";
+// Logging
+export * from "./logger";
+export * from "./response-helpers";
+export * from "./response-schemas";
 export * from "./route-registry";
 export * from "./schema-auto-discovery";
-export * from "./log-schemas";
 export * from "./schema-registry";
-
-export type {
-  SchemaIdentifier,
-  SchemaRegistryType,
-} from "../_generated/schemas";
+// Types
+export * from "./types";

@@ -6,10 +6,10 @@ import type { AppLogger } from "./logger";
  * Defines the shape of context variables available in Hono handlers
  */
 export type AppEnv = {
-  Variables: {
-    logger: AppLogger;
-    requestId: string;
-    user: typeof auth.$Infer.Session.user | null;
-    session: typeof auth.$Infer.Session.session | null;
-  };
+	Variables: {
+		logger: AppLogger;
+		requestId: string;
+		user: typeof auth.$Infer.Session.user | null;
+		session: typeof auth.$Infer.Session.session | null;
+	};
 };

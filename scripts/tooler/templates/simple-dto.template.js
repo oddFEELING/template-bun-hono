@@ -6,9 +6,9 @@ import { toPascalCase } from "../utils/string.js";
  * @returns {string} The DTO template content
  */
 export function generateSimpleDtoTemplate(routeName) {
-  const className = toPascalCase(routeName);
+	const className = toPascalCase(routeName);
 
-  return `import { z } from "@hono/zod-openapi";
+	return `import { z } from "@hono/zod-openapi";
 
 /**
  * ${className} DTO schemas for request/response validation

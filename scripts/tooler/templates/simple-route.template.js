@@ -7,10 +7,10 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The simple route index template content
  */
 export function generateSimpleRouteTemplate(routeName, version = "v1") {
-  const className = toPascalCase(routeName);
-  const varName = toCamelCase(routeName);
+	const className = toPascalCase(routeName);
+	const varName = toCamelCase(routeName);
 
-  return `import { OpenAPIHono } from "@hono/zod-openapi";
+	return `import { OpenAPIHono } from "@hono/zod-openapi";
 import { getServices } from "@/lib/get-service";
 import { registerRoute } from "@/lib/route-registry";
 import type { RouteConfig } from "@/lib/route-registry";

@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { resolve } from "path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { parse } from "yaml";
 
 /**
@@ -7,9 +7,9 @@ import { parse } from "yaml";
  * Loaded from api.config.yml at the project root
  */
 export interface ApiConfig {
-  defaultVersion: string;
-  prefix: string;
-  availableVersions: string[];
+	defaultVersion: string;
+	prefix: string;
+	availableVersions: string[];
 }
 
 /**
@@ -17,25 +17,24 @@ export interface ApiConfig {
  * @returns Parsed API configuration
  */
 function loadApiConfig(): ApiConfig {
-  const configPath = resolve(process.cwd(), "api.config.yml");
+	const configPath = resolve(process.cwd(), "api.config.yml");
 
-  try {
-    const fileContents = readFileSync(configPath, "utf8");
-    const config = parse(fileContents) as ApiConfig;
+	try {
+		const fileContents = readFileSync(configPath, "utf8");
+		const config = parse(fileContents) as ApiConfig;
 
-    return {
-      defaultVersion: config.defaultVersion || "v1",
-      prefix: config.prefix || "/api",
-      availableVersions: config.availableVersions || ["v1"],
-    };
-  } catch (error) {
-    console.warn("⚠️  Could not load api.config.yml, using defaults");
-    return {
-      defaultVersion: "v1",
-      prefix: "/api",
-      availableVersions: ["v1"],
-    };
-  }
+		return {
+			defaultVersion: config.defaultVersion || "v1",
+			prefix: config.prefix || "/api",
+			availableVersions: config.availableVersions || ["v1"],
+		};
+	} catch (_error) {
+		return {
+			defaultVersion: "v1",
+			prefix: "/api",
+			availableVersions: ["v1"],
+		};
+	}
 }
 
 /**

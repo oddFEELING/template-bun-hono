@@ -5,22 +5,22 @@ import type { Context } from "hono";
  * Centralized status codes for consistent usage across the application
  */
 export const HTTP_STATUS = {
-  // Success codes
-  OK: 200,
-  CREATED: 201,
-  NO_CONTENT: 204,
+	// Success codes
+	OK: 200,
+	CREATED: 201,
+	NO_CONTENT: 204,
 
-  // Client error codes
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  CONFLICT: 409,
-  UNPROCESSABLE: 422,
+	// Client error codes
+	BAD_REQUEST: 400,
+	UNAUTHORIZED: 401,
+	FORBIDDEN: 403,
+	NOT_FOUND: 404,
+	CONFLICT: 409,
+	UNPROCESSABLE: 422,
 
-  // Server error codes
-  SERVER_ERROR: 500,
-  SERVICE_UNAVAILABLE: 503,
+	// Server error codes
+	SERVER_ERROR: 500,
+	SERVICE_UNAVAILABLE: 503,
 } as const;
 
 /**
@@ -31,10 +31,10 @@ export const HTTP_STATUS = {
  * @returns JSON response with success format
  */
 export function successResponse<T>(c: Context, data: T) {
-  return c.json(
-    { success: true as const, data, status: HTTP_STATUS.OK },
-    HTTP_STATUS.OK
-  );
+	return c.json(
+		{ success: true as const, data, status: HTTP_STATUS.OK },
+		HTTP_STATUS.OK
+	);
 }
 
 /**
@@ -44,10 +44,10 @@ export function successResponse<T>(c: Context, data: T) {
  * @returns JSON response with 201 status
  */
 export function createdResponse<T>(c: Context, data: T) {
-  return c.json(
-    { success: true as const, data, status: HTTP_STATUS.CREATED },
-    HTTP_STATUS.CREATED
-  );
+	return c.json(
+		{ success: true as const, data, status: HTTP_STATUS.CREATED },
+		HTTP_STATUS.CREATED
+	);
 }
 
 /**
@@ -56,22 +56,19 @@ export function createdResponse<T>(c: Context, data: T) {
  * @param message - Error message (default: "Resource not found")
  * @returns JSON response with 404 status
  */
-export function notFoundResponse(
-  c: Context,
-  message: string = "Resource not found"
-) {
-  return c.json(
-    {
-      success: false as const,
-      data: null,
-      status: HTTP_STATUS.NOT_FOUND,
-      error: {
-        type: "not_found" as const,
-        message,
-      },
-    },
-    HTTP_STATUS.NOT_FOUND
-  );
+export function notFoundResponse(c: Context, message = "Resource not found") {
+	return c.json(
+		{
+			success: false as const,
+			data: null,
+			status: HTTP_STATUS.NOT_FOUND,
+			error: {
+				type: "not_found" as const,
+				message,
+			},
+		},
+		HTTP_STATUS.NOT_FOUND
+	);
 }
 
 /**
@@ -81,18 +78,18 @@ export function notFoundResponse(
  * @returns JSON response with 400 status
  */
 export function badRequestResponse(c: Context, message: string) {
-  return c.json(
-    {
-      success: false as const,
-      data: null,
-      status: HTTP_STATUS.BAD_REQUEST,
-      error: {
-        type: "bad_request" as const,
-        message,
-      },
-    },
-    HTTP_STATUS.BAD_REQUEST
-  );
+	return c.json(
+		{
+			success: false as const,
+			data: null,
+			status: HTTP_STATUS.BAD_REQUEST,
+			error: {
+				type: "bad_request" as const,
+				message,
+			},
+		},
+		HTTP_STATUS.BAD_REQUEST
+	);
 }
 
 /**
@@ -101,22 +98,19 @@ export function badRequestResponse(c: Context, message: string) {
  * @param message - Error message (default: "Unauthorized")
  * @returns JSON response with 401 status
  */
-export function unauthorizedResponse(
-  c: Context,
-  message: string = "Unauthorized"
-) {
-  return c.json(
-    {
-      success: false as const,
-      data: null,
-      status: HTTP_STATUS.UNAUTHORIZED,
-      error: {
-        type: "unauthorized" as const,
-        message,
-      },
-    },
-    HTTP_STATUS.UNAUTHORIZED
-  );
+export function unauthorizedResponse(c: Context, message = "Unauthorized") {
+	return c.json(
+		{
+			success: false as const,
+			data: null,
+			status: HTTP_STATUS.UNAUTHORIZED,
+			error: {
+				type: "unauthorized" as const,
+				message,
+			},
+		},
+		HTTP_STATUS.UNAUTHORIZED
+	);
 }
 
 /**
@@ -125,19 +119,19 @@ export function unauthorizedResponse(
  * @param message - Error message (default: "Forbidden")
  * @returns JSON response with 403 status
  */
-export function forbiddenResponse(c: Context, message: string = "Forbidden") {
-  return c.json(
-    {
-      success: false as const,
-      data: null,
-      status: HTTP_STATUS.FORBIDDEN,
-      error: {
-        type: "forbidden" as const,
-        message,
-      },
-    },
-    HTTP_STATUS.FORBIDDEN
-  );
+export function forbiddenResponse(c: Context, message = "Forbidden") {
+	return c.json(
+		{
+			success: false as const,
+			data: null,
+			status: HTTP_STATUS.FORBIDDEN,
+			error: {
+				type: "forbidden" as const,
+				message,
+			},
+		},
+		HTTP_STATUS.FORBIDDEN
+	);
 }
 
 /**
@@ -148,20 +142,20 @@ export function forbiddenResponse(c: Context, message: string = "Forbidden") {
  * @returns JSON response with error format
  */
 export function errorResponse(
-  c: Context,
-  message: string,
-  status: number = HTTP_STATUS.SERVER_ERROR
+	c: Context,
+	message: string,
+	status: number = HTTP_STATUS.SERVER_ERROR
 ) {
-  return c.json(
-    {
-      success: false as const,
-      data: null,
-      status,
-      error: {
-        type: "error" as const,
-        message,
-      },
-    },
-    status
-  );
+	return c.json(
+		{
+			success: false as const,
+			data: null,
+			status,
+			error: {
+				type: "error" as const,
+				message,
+			},
+		},
+		status
+	);
 }

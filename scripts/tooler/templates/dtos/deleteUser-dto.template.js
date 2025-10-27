@@ -6,8 +6,8 @@ import { toPascalCase } from "../../utils/string.js";
  * @returns {string} The DTO template content
  */
 export function generateDeleteUserDtoTemplate(moduleName) {
-  const className = toPascalCase(moduleName);
-  return `import { z } from "@hono/zod-openapi";
+	const className = toPascalCase(moduleName);
+	return `import { z } from "@hono/zod-openapi";
 
 /**
  * Delete ${className} DTO schemas

@@ -6,9 +6,9 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The DTO template content
  */
 export function generateDtoTemplate(moduleName) {
-  const className = toPascalCase(moduleName);
-  const varName = toCamelCase(moduleName);
-  return `import { z } from "@hono/zod-openapi";
+	const className = toPascalCase(moduleName);
+	const varName = toCamelCase(moduleName);
+	return `import { z } from "@hono/zod-openapi";
 
 /**
  * ${className} DTO schemas for request/response validation

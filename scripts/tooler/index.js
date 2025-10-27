@@ -9,7 +9,7 @@ import { colors, logError } from "./utils/logger.js";
  * Display help information
  */
 function showHelp() {
-  console.log(`
+	console.log(`
 ${colors.bright}${colors.cyan}Naalya Tooler CLI${colors.reset}
 
 ${colors.bright}Usage:${colors.reset}
@@ -49,18 +49,18 @@ const args = process.argv.slice(2);
 
 // Parse flags and arguments
 const flags = {
-  public: args.includes("--public"),
-  private: args.includes("--private"),
-  slim: args.includes("--slim"),
+	public: args.includes("--public"),
+	private: args.includes("--private"),
+	slim: args.includes("--slim"),
 };
 
 // Get version flag value
-const versionFlagIndex = args.findIndex((arg) => arg === "--version");
+const versionFlagIndex = args.indexOf("--version");
 const versionValue = versionFlagIndex >= 0 ? args[versionFlagIndex + 1] : null;
 
 // Remove flags from args to get command, subcommand, and name
 const nonFlagArgs = args.filter(
-  (arg) => !arg.startsWith("--") && arg !== versionValue
+	(arg) => !arg.startsWith("--") && arg !== versionValue
 );
 const command = nonFlagArgs[0];
 const subCommand = nonFlagArgs[1];
@@ -68,72 +68,72 @@ const name = nonFlagArgs[2];
 
 // ~ ======= Main CLI logic ======= ~
 if (args.includes("--help") || args.length === 0) {
-  showHelp();
-  process.exit(0);
+	showHelp();
+	process.exit(0);
 }
 
 if (command === "create" && subCommand === "module") {
-  if (!name) {
-    logError("Module name is required!");
-    console.log(
-      `\nUsage: bun tooler create module ${colors.yellow}<module_name>${colors.reset} [--public|--private]\n`
-    );
-    process.exit(1);
-  }
+	if (!name) {
+		logError("Module name is required!");
+		console.log(
+			`\nUsage: bun tooler create module ${colors.yellow}<module_name>${colors.reset} [--public|--private]\n`
+		);
+		process.exit(1);
+	}
 
-  // Validate flags
-  if (flags.public && flags.private) {
-    logError("Cannot use both --public and --private flags!");
-    process.exit(1);
-  }
+	// Validate flags
+	if (flags.public && flags.private) {
+		logError("Cannot use both --public and --private flags!");
+		process.exit(1);
+	}
 
-  // Module services are private by default
-  const visibility = flags.public ? "public" : "private";
-  const slim = flags.slim;
-  await createModule(name, visibility, versionValue, slim);
+	// Module services are private by default
+	const visibility = flags.public ? "public" : "private";
+	const slim = flags.slim;
+	await createModule(name, visibility, versionValue, slim);
 } else if (command === "create" && subCommand === "provider") {
-  if (!name) {
-    logError("Provider name is required!");
-    console.log(
-      `\nUsage: bun tooler create provider ${colors.yellow}<provider_name>${colors.reset} [--public|--private]\n`
-    );
-    process.exit(1);
-  }
+	if (!name) {
+		logError("Provider name is required!");
+		console.log(
+			`\nUsage: bun tooler create provider ${colors.yellow}<provider_name>${colors.reset} [--public|--private]\n`
+		);
+		process.exit(1);
+	}
 
-  // Validate flags
-  if (flags.public && flags.private) {
-    logError("Cannot use both --public and --private flags!");
-    process.exit(1);
-  }
+	// Validate flags
+	if (flags.public && flags.private) {
+		logError("Cannot use both --public and --private flags!");
+		process.exit(1);
+	}
 
-  // Provider services are public by default
-  const visibility = flags.private ? "private" : "public";
-  await createProvider(name, visibility);
+	// Provider services are public by default
+	const visibility = flags.private ? "private" : "public";
+	await createProvider(name, visibility);
 } else if (command === "list") {
-  // List command - subCommand is optional (modules, providers, routes, entities, schemas, or "all")
-  const listType = subCommand || "all";
-  const validTypes = [
-    "all",
-    "modules",
-    "providers",
-    "routes",
-    "entities",
-    "schemas",
-  ];
+	// List command - subCommand is optional (modules, providers, routes, entities, schemas, or "all")
+	const listType = subCommand || "all";
+	const validTypes = [
+		"all",
+		"modules",
+		"providers",
+		"routes",
+		"entities",
+		"schemas",
+	];
 
-  if (!validTypes.includes(listType)) {
-    logError(`Invalid list type: ${listType}`);
-    console.log(
-      `\nValid types: ${colors.cyan}${validTypes.join(", ")}${colors.reset}\n`
-    );
-    process.exit(1);
-  }
+	if (!validTypes.includes(listType)) {
+		logError(`Invalid list type: ${listType}`);
+		console.log(
+			`\nValid types: ${colors.cyan}${validTypes.join(", ")}${colors.reset}\n`
+		);
+		process.exit(1);
+	}
 
-  await list(listType);
+	await list(listType);
 } else {
-  logError(`Unknown command: ${command} ${subCommand}`);
-  console.log(
-    `\nRun ${colors.cyan}bun tooler --help${colors.reset} for usage information.\n`
-  );
-  process.exit(1);
+	logError(`Unknown command: ${command} ${subCommand}`);
+	console.log(
+		`\nRun ${colors.cyan}bun tooler --help${colors.reset} for usage information.\n`
+	);
+	process.exit(1);
 }

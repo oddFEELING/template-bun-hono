@@ -6,10 +6,10 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The OpenAPI template content
  */
 export function generateSimpleOpenApiTemplate(routeName) {
-  const className = toPascalCase(routeName);
-  const varName = toCamelCase(routeName);
+	const className = toPascalCase(routeName);
+	const varName = toCamelCase(routeName);
 
-  return `import { createRoute } from "@hono/zod-openapi";
+	return `import { createRoute } from "@hono/zod-openapi";
 import {
   messageRequestSchema,
   queryParamSchema,

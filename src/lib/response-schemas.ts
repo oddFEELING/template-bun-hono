@@ -11,11 +11,11 @@ import { z } from "zod";
  * @returns Success response schema
  */
 export function createSuccessSchema<T extends z.ZodTypeAny>(dataSchema: T) {
-  return z.object({
-    success: z.literal(true),
-    data: dataSchema,
-    status: z.number(),
-  });
+	return z.object({
+		success: z.literal(true),
+		data: dataSchema,
+		status: z.number(),
+	});
 }
 
 /**
@@ -24,11 +24,11 @@ export function createSuccessSchema<T extends z.ZodTypeAny>(dataSchema: T) {
  * @returns List response schema
  */
 export function createListSchema<T extends z.ZodTypeAny>(itemSchema: T) {
-  return z.object({
-    success: z.literal(true),
-    data: z.array(itemSchema).nullable(),
-    status: z.number(),
-  });
+	return z.object({
+		success: z.literal(true),
+		data: z.array(itemSchema).nullable(),
+		status: z.number(),
+	});
 }
 
 /**
@@ -37,36 +37,36 @@ export function createListSchema<T extends z.ZodTypeAny>(itemSchema: T) {
  * @returns Single item response schema
  */
 export function createSingleSchema<T extends z.ZodTypeAny>(itemSchema: T) {
-  return z.object({
-    success: z.literal(true),
-    data: itemSchema.nullable(),
-    status: z.number(),
-  });
+	return z.object({
+		success: z.literal(true),
+		data: itemSchema.nullable(),
+		status: z.number(),
+	});
 }
 
 /**
  * Base success response (no specific data type)
  */
 export const baseSuccessResponse = z.object({
-  success: z.literal(true),
-  data: z.any(),
-  status: z.number(),
+	success: z.literal(true),
+	data: z.any(),
+	status: z.number(),
 });
 
 /**
  * Base list response (array of any)
  */
 export const baseListResponse = z.object({
-  success: z.literal(true),
-  data: z.array(z.any()).nullable(),
-  status: z.number(),
+	success: z.literal(true),
+	data: z.array(z.any()).nullable(),
+	status: z.number(),
 });
 
 /**
  * Base single response (nullable any)
  */
 export const baseSingleResponse = z.object({
-  success: z.literal(true),
-  data: z.any().nullable(),
-  status: z.number(),
+	success: z.literal(true),
+	data: z.any().nullable(),
+	status: z.number(),
 });

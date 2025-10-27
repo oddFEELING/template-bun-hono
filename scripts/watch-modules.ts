@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { watch } from "fs";
-import { join, resolve } from "path";
+import { watch } from "node:fs";
+import { join, resolve } from "node:path";
 import { generateModuleList } from "./generate-module-list";
 import { generateSchemaList } from "./generate-schema-list";
 
@@ -21,36 +21,36 @@ let schemaDebounceTimer: Timer | null = null;
  * Debounced module list regeneration
  */
 function debouncedRegenerateModules() {
-  if (moduleDebounceTimer) {
-    clearTimeout(moduleDebounceTimer);
-  }
+	if (moduleDebounceTimer) {
+		clearTimeout(moduleDebounceTimer);
+	}
 
-  moduleDebounceTimer = setTimeout(() => {
-    console.log("\n📦 Module structure changed, regenerating module list...");
-    try {
-      generateModuleList();
-    } catch (error) {
-      console.error("❌ Error regenerating module list:", error);
-    }
-  }, 500);
+	moduleDebounceTimer = setTimeout(() => {
+		console.log("\n📦 Module structure changed, regenerating module list...");
+		try {
+			generateModuleList();
+		} catch (error) {
+			console.error("❌ Error regenerating module list:", error);
+		}
+	}, 500);
 }
 
 /**
  * Debounced schema list regeneration
  */
 function debouncedRegenerateSchemas() {
-  if (schemaDebounceTimer) {
-    clearTimeout(schemaDebounceTimer);
-  }
+	if (schemaDebounceTimer) {
+		clearTimeout(schemaDebounceTimer);
+	}
 
-  schemaDebounceTimer = setTimeout(() => {
-    console.log("\n📋 DTO file changed, regenerating schema list...");
-    try {
-      generateSchemaList();
-    } catch (error) {
-      console.error("❌ Error regenerating schema list:", error);
-    }
-  }, 500);
+	schemaDebounceTimer = setTimeout(() => {
+		console.log("\n📋 DTO file changed, regenerating schema list...");
+		try {
+			generateSchemaList();
+		} catch (error) {
+			console.error("❌ Error regenerating schema list:", error);
+		}
+	}, 500);
 }
 
 console.log("👀 Watching for changes...");
@@ -62,54 +62,54 @@ console.log("   Press Ctrl+C to stop\n");
 
 // Watch modules directory for new/removed modules
 try {
-  watch(modulesDir, { recursive: false }, (eventType, filename) => {
-    if (filename && eventType === "rename") {
-      // Module directory was added or removed
-      debouncedRegenerateModules();
-    }
-  });
+	watch(modulesDir, { recursive: false }, (eventType, filename) => {
+		if (filename && eventType === "rename") {
+			// Module directory was added or removed
+			debouncedRegenerateModules();
+		}
+	});
 } catch (error) {
-  console.warn("⚠️  Could not watch modules directory:", error);
+	console.warn("⚠️  Could not watch modules directory:", error);
 }
 
 // Watch providers directory for new/removed providers
 try {
-  watch(providersDir, { recursive: false }, (eventType, filename) => {
-    if (filename && eventType === "rename") {
-      // Provider directory was added or removed
-      debouncedRegenerateModules();
-    }
-  });
+	watch(providersDir, { recursive: false }, (eventType, filename) => {
+		if (filename && eventType === "rename") {
+			// Provider directory was added or removed
+			debouncedRegenerateModules();
+		}
+	});
 } catch (error) {
-  console.warn("⚠️  Could not watch providers directory:", error);
+	console.warn("⚠️  Could not watch providers directory:", error);
 }
 
 // Watch for DTO file changes in modules
 try {
-  watch(modulesDir, { recursive: true }, (eventType, filename) => {
-    if (filename && filename.endsWith(".dto.ts")) {
-      // DTO file was added, modified, or removed
-      debouncedRegenerateSchemas();
-    }
-  });
+	watch(modulesDir, { recursive: true }, (_eventType, filename) => {
+		if (filename?.endsWith(".dto.ts")) {
+			// DTO file was added, modified, or removed
+			debouncedRegenerateSchemas();
+		}
+	});
 } catch (error) {
-  console.warn("⚠️  Could not watch modules DTO files:", error);
+	console.warn("⚠️  Could not watch modules DTO files:", error);
 }
 
 // Watch for DTO file changes in providers
 try {
-  watch(providersDir, { recursive: true }, (eventType, filename) => {
-    if (filename && filename.endsWith(".dto.ts")) {
-      // DTO file was added, modified, or removed
-      debouncedRegenerateSchemas();
-    }
-  });
+	watch(providersDir, { recursive: true }, (_eventType, filename) => {
+		if (filename?.endsWith(".dto.ts")) {
+			// DTO file was added, modified, or removed
+			debouncedRegenerateSchemas();
+		}
+	});
 } catch (error) {
-  console.warn("⚠️  Could not watch providers DTO files:", error);
+	console.warn("⚠️  Could not watch providers DTO files:", error);
 }
 
 // Keep the process alive
 process.on("SIGINT", () => {
-  console.log("\n👋 Stopped watching for changes");
-  process.exit(0);
+	console.log("\n👋 Stopped watching for changes");
+	process.exit(0);
 });

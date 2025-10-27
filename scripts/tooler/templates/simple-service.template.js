@@ -7,27 +7,27 @@ import { toPascalCase } from "../utils/string.js";
  * @returns {string} The simple service template content
  */
 export function generateSimpleServiceTemplate(
-  routeName,
-  visibility = "private"
+	routeName,
+	visibility = "private"
 ) {
-  const className = toPascalCase(routeName);
+	const className = toPascalCase(routeName);
 
-  // Determine service decorator based on visibility
-  const serviceDecorator =
-    visibility === "public"
-      ? `@Service({ visibility: "public" })`
-      : `@Service()`;
+	// Determine service decorator based on visibility
+	const serviceDecorator =
+		visibility === "public"
+			? `@Service({ visibility: "public" })`
+			: "@Service()";
 
-  return `import { Service } from "@/decorators";
+	return `import { Service } from "@/decorators";
 import { AppLogger } from "@/lib/logger";
 
 /**
  * ${className}Service
  * Service class for handling ${routeName} business logic
  * ${
-   visibility === "public"
-     ? "Public service - accessible from other modules"
-     : "Private service - only accessible within this module"
+		visibility === "public"
+			? "Public service - accessible from other modules"
+			: "Private service - only accessible within this module"
  }
  */
 ${serviceDecorator}
