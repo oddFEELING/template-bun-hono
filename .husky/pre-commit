@@ -2,6 +2,10 @@
 # Exit on any error
 set -e
 
+# NOTE: This hook does not preserve partial staging (git add -p).
+# All modified lines in a staged file will be staged after formatting.
+# To work around this, commit files separately or stage complete files.
+
 # Check if there are any staged files
 if [ -z "$(git diff --cached --name-only)" ]; then
   echo "No staged files to format"
@@ -13,49 +17,43 @@ STAGED_HASH=$(git diff --cached | sha256sum | cut -d' ' -f1)
 
 # Save list of staged files (handling all file states)
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
-PARTIALLY_STAGED=$(git diff --name-only)
+
+# Count stash entries before stashing to detect if a new stash is created
+STASH_COUNT_BEFORE=$(git stash list | wc -l)
 
 # Stash unstaged changes to preserve working directory
 # --keep-index keeps staged changes in working tree
-git stash push --quiet --keep-index --message "pre-commit-stash" || true
-STASHED=$?
+git stash push --quiet --keep-index --message "pre-commit-stash"
+
+# Count stash entries after stashing
+STASH_COUNT_AFTER=$(git stash list | wc -l)
+
+# Determine if a stash was actually created
+if [ "$STASH_COUNT_AFTER" -gt "$STASH_COUNT_BEFORE" ]; then
+  STASHED=1
+else
+  STASHED=0
+fi
 
 # Run formatter on the staged files
 bun x ultracite fix
 FORMAT_EXIT_CODE=$?
 
-# Restore working directory state
-if [ $STASHED -eq 0 ]; then
-  # Re-stage the formatted files
-  if [ -n "$STAGED_FILES" ]; then
-    echo "$STAGED_FILES" | while IFS= read -r file; do
-      if [ -f "$file" ]; then
-        git add "$file"
-      fi
-    done
-  fi
-  
-  # Restore unstaged changes
-  git stash pop --quiet || true
-  
-  # Restore partial staging if files were partially staged
-  if [ -n "$PARTIALLY_STAGED" ]; then
-    for file in $PARTIALLY_STAGED; do
-      if [ -f "$file" ] && echo "$STAGED_FILES" | grep -q "^$file$"; then
-        # File was partially staged - need to unstage the unstaged parts
-        git restore --staged "$file" 2>/dev/null || true
-        git add -p "$file" < /dev/null 2>/dev/null || git add "$file"
-      fi
-    done
-  fi
-else
-  # No stash was created, just re-add the formatted files
-  if [ -n "$STAGED_FILES" ]; then
-    echo "$STAGED_FILES" | while IFS= read -r file; do
-      if [ -f "$file" ]; then
-        git add "$file"
-      fi
-    done
+# Re-stage the formatted files
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | while IFS= read -r file; do
+    if [ -f "$file" ]; then
+      git add "$file"
+    fi
+  done
+fi
+
+# Restore working directory state by popping stash only if one was created
+if [ $STASHED -eq 1 ]; then
+  if ! git stash pop --quiet; then
+    echo "⚠️  Warning: Conflicts occurred when restoring unstaged changes."
+    echo "   Please resolve conflicts and commit manually."
+    exit 1
   fi
 fi
 

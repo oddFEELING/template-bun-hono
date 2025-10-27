@@ -1,5 +1,3 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
-import { Scalar } from "@scalar/hono-api-reference";
 import { auth } from "@/lib/auth";
 import { formatValidationError } from "@/lib/format-validation-error";
 import { getService } from "@/lib/get-service";
@@ -7,6 +5,8 @@ import { AppLogger } from "@/lib/logger";
 import { getRegisteredRoutes } from "@/lib/route-registry";
 import { autoRegisterSchemas } from "@/lib/schema-auto-discovery";
 import type { AppEnv } from "@/lib/types";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
 
 const logger = getService(AppLogger);
 
@@ -90,7 +90,6 @@ app.get("/doc/download", (c) => {
 	// Set headers to force a file download in the browser
 	c.header("Content-Type", "application/json; charset=utf-8");
 	c.header("Content-Disposition", 'attachment; filename="openapi.json"');
-	c.header("Access-Control-Allow-Origin", "http://localhost:5173");
 	c.header("Access-Control-Allow-Methods", "GET");
 
 	// Send the generated OpenAPI document with pretty formatting
