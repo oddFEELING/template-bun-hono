@@ -30,6 +30,9 @@
         "noMagicNumbers": "off",
         "useFilenamingConvention": "off"
       },
+      "suspicious": {
+        "useAwait": "off"
+      },
       "nursery": {
         "noEmptySource": "off"
       }

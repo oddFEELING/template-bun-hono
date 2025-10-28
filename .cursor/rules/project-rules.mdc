@@ -2,4 +2,4 @@
 alwaysApply: true
 ---
 
-- Always avoid lint errors
+- Always avoid lint errors and ts errors after every code generation
