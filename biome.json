@@ -25,6 +25,7 @@
         "noNamespaceImport": "off"
       },
       "style": {
+        "noEnum": "off",
         "useConsistentTypeDefinitions": "off",
         "useImportType": "off",
         "noMagicNumbers": "off",

@@ -47,6 +47,7 @@ const ALLOWED_ENTRY_POINTS = new Set([
 	"_init-routes",
 	"context.middleware",
 	"app.middleware",
+	"index.ts", // Main entry point for server initialization and shutdown
 ]);
 
 /**
