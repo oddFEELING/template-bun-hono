@@ -1,35 +1,36 @@
-import { env } from "@/config";
 import { Service } from "@/decorators";
 import { AppLogger } from "@/lib/logger";
-import { Job, Queue, QueueEvents, Worker } from "bullmq";
-import IORedis, { RedisOptions } from "ioredis";
+import { RedisProvider } from "@/providers/redis/redis.service";
+import { type Job, Queue, QueueEvents, Worker } from "bullmq";
+import type { RedisOptions } from "ioredis";
 
 /**
  * BullMqProvider
  * Provider class for handling bull-mq integration
+ * Uses RedisProvider for connection management
  * Public provider - accessible from other modules
  */
 @Service({ visibility: "public" })
 export class BullMqProvider {
 	private readonly logger: AppLogger;
+	private readonly redis: RedisProvider;
 	private readonly workers: Map<string, Worker>;
 	private readonly queues: Map<string, Queue>;
 	private readonly queueEvents: Map<string, QueueEvents>;
-	private readonly redisClient: IORedis;
 	private readonly redisOptions: RedisOptions;
 
-	constructor(logger: AppLogger) {
+	constructor(logger: AppLogger, redis: RedisProvider) {
 		this.logger = logger;
+		this.redis = redis;
 		this.logger.info("BullMqProvider initialized");
 
-		// ~ ======= Create redis connection options ======= ~
+		// ~ ======= Get redis connection options from RedisProvider ======= ~
+		// BullMQ requires maxRetriesPerRequest: null for blocking operations
+		const redisClient = this.redis.getClient();
 		this.redisOptions = {
-			port: env.REDIS_PORT,
-			host: env.REDIS_HOST,
-			password: env.REDIS_PASSWORD,
+			...redisClient.options,
 			maxRetriesPerRequest: null,
 		};
-		this.redisClient = new IORedis(this.redisOptions);
 
 		// ~ ======= Initialize maps ======= ~
 		this.queues = new Map<string, Queue>();
@@ -291,7 +292,7 @@ export class BullMqProvider {
 				return { jobId: job.id, completed: true };
 			},
 			{
-				connection: this.redisClient,
+				connection: this.redisOptions,
 			}
 		);
 
@@ -370,7 +371,8 @@ export class BullMqProvider {
 	}
 
 	/**
-	 * Gracefully close all connections
+	 * Gracefully close all BullMQ connections
+	 * Note: Redis connection is managed by RedisProvider
 	 */
 	async close() {
 		// Close all workers
@@ -389,8 +391,7 @@ export class BullMqProvider {
 			);
 		}
 
-		// Close Redis client
-		await this.redisClient.quit();
-		this.logger.info("[BullMqProvider] Closed all connections");
+		// Note: Redis connection is managed by RedisProvider, so we don't close it here
+		this.logger.info("[BullMqProvider] Closed all BullMQ connections");
 	}
 }

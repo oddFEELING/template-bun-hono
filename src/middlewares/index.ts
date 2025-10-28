@@ -5,3 +5,4 @@
 export * from "./app.middleware";
 export * from "./auth.middleware";
 export * from "./context.middleware";
+export * from "./rate-limiter.middleware";

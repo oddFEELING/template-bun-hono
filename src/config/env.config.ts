@@ -13,9 +13,15 @@ const envSchema = z.object({
 	REDIS_PASSWORD: z.string().optional().default(""),
 	REDIS_USERNAME: z.string().optional().default(""),
 	REDIS_DATABASE: z.number().default(0),
+	REDIS_KEY_PREFIX: z.string().optional().default("app:"),
+	REDIS_CACHE_TTL: z.number().default(3600), // 1 hour default cache TTL
 
 	//  Sentry DSN
 	SENTRY_DSN: z.string().optional().default(""),
+
+	//  Rate Limiting
+	ENABLE_RATE_LIMITING: z.string().optional().default("false"),
+	NODE_ENV: z.string().optional().default("development"),
 });
 
 // Parse and validate environment variables
