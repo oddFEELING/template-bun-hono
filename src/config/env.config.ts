@@ -9,22 +9,35 @@ const envSchema = z.object({
 
 	//  Redis
 	REDIS_HOST: z.string().default("localhost"),
-	REDIS_PORT: z.coerce.number().default(6379),
-	REDIS_PASSWORD: z.string().optional().default(""),
-	REDIS_USERNAME: z.string().optional().default(""),
-	REDIS_DATABASE: z.coerce.number().default(0),
+	REDIS_PORT: z.coerce.number().int().min(1).max(65_535).default(6379),
+	REDIS_PASSWORD: z.string().min(1).optional(),
+	REDIS_USERNAME: z.string().min(1).optional(),
+	REDIS_DATABASE: z.coerce.number().int().min(0).default(0),
 	REDIS_KEY_PREFIX: z.string().optional().default("app:"),
-	REDIS_CACHE_TTL: z.coerce.number().default(3600), // 1 hour default cache TTL
+	REDIS_CACHE_TTL: z.coerce.number().int().min(1).default(3600), // 1 hour default cache TTL
 
-	//  Sentry DSN
+	//  Sentry
 	SENTRY_DSN: z.string().optional().default(""),
+	SENTRY_TRACES_SAMPLE_RATE: z.coerce
+		.number()
+		.min(0)
+		.max(1)
+		.default(0.1)
+		.optional(),
 
 	//  Rate Limiting
 	ENABLE_RATE_LIMITING: z.string().optional().default("false"),
 	NODE_ENV: z.string().optional().default("development"),
 
+	//  Bull Board UI
+	BULL_BOARD_ENABLED: z
+		.string()
+		.optional()
+		.default("true")
+		.transform((val) => val === "true"),
+
 	//  Graceful Shutdown
-	SHUTDOWN_TIMEOUT: z.coerce.number().default(30_000), // 30 seconds default timeout for graceful shutdown
+	SHUTDOWN_TIMEOUT: z.coerce.number().int().min(1000).default(30_000), // 30 seconds default timeout for graceful shutdown
 });
 
 // Parse and validate environment variables

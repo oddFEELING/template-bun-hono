@@ -5,7 +5,7 @@ import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
 import { RedisProvider } from "@/providers/redis/redis.service";
 import { RedisStore } from "@hono-rate-limiter/redis";
-import type { Context, MiddlewareHandler } from "hono";
+import { type Context, type MiddlewareHandler } from "hono";
 import { rateLimiter } from "hono-rate-limiter";
 
 /**
@@ -147,11 +147,7 @@ const generateRateLimitKey = (
 ): string => {
 	const keyParts: string[] = [];
 
-	// Use custom extractor if provided
-	if (options.customExtractor) {
-		// Custom extractor should return the full key
-		return "";
-	}
+	// Note: customExtractor is handled in the rateLimiter.keyGenerator
 
 	// Include IP address
 	if (options.useIp) {
@@ -220,10 +216,10 @@ const createRateLimiter = (configKey: string): MiddlewareHandler<AppEnv> => {
 		windowMs: config.windowMs,
 		limit: config.limit,
 		standardHeaders: config.standardHeaders ?? "draft-7",
-		// biome-ignore lint/suspicious/noExplicitAny: legacyHeaders option compatibility
-		store: store as any,
+		legacyHeaders: config.legacyHeaders ?? false,
+		store,
 		// Custom key generator based on configuration
-		keyGenerator: async (c) => {
+		keyGenerator: async (c: Context<AppEnv>) => {
 			// Use custom extractor if provided
 			if (config.keyOptions.customExtractor) {
 				return await config.keyOptions.customExtractor(c);
@@ -231,7 +227,7 @@ const createRateLimiter = (configKey: string): MiddlewareHandler<AppEnv> => {
 			return generateRateLimitKey(c, config.keyOptions);
 		},
 		// Custom handler when rate limit is exceeded
-		handler: (c) => {
+		handler: (c: Context<AppEnv>) => {
 			logger.warn(
 				`Rate limit exceeded for ${configKey}: ${c.req.path} - Key: ${generateRateLimitKey(c, config.keyOptions)}`
 			);
@@ -243,7 +239,8 @@ const createRateLimiter = (configKey: string): MiddlewareHandler<AppEnv> => {
 		},
 		// Skip rate limiting based on configuration
 		skip: config.skip,
-	});
+		// biome-ignore lint/suspicious/noExplicitAny: rateLimiter requires type casting for store and legacyHeaders options
+	} as any);
 };
 
 /**

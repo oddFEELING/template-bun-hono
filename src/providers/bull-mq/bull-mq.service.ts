@@ -3,6 +3,7 @@ import { AppLogger } from "@/lib/logger";
 import { RedisProvider } from "@/providers/redis/redis.service";
 import { type Job, Queue, QueueEvents, Worker } from "bullmq";
 import type { RedisOptions } from "ioredis";
+import { type JobDataMap, JobType, QueueName } from "./interfaces/bull-mq.dto";
 
 /**
  * BullMqProvider
@@ -40,8 +41,10 @@ export class BullMqProvider {
 
 	/**
 	 * Get or create a queue by name
+	 * Note: This only creates the Queue instance. Workers and event listeners
+	 * must be registered explicitly using registerProcessor()
 	 */
-	getQueue(queueName: string): Queue {
+	getQueue(queueName: QueueName): Queue {
 		if (!this.queues.has(queueName)) {
 			// Create the queue
 			const queue = new Queue(queueName, {
@@ -49,23 +52,76 @@ export class BullMqProvider {
 			});
 			this.queues.set(queueName, queue);
 			this.logger.info(`[BullMqProvider] Queue "${queueName}" created`);
-
-			// Create a worker for this queue
-			this.createWorkerForQueue(queueName);
-
-			// Create queue events listener for this queue
-			this.createQueueEventsListener(queueName);
 		}
 		return this.queues.get(queueName) as Queue;
 	}
 
 	/**
-	 * Add a job to a specific queue with options
+	 * Register a processor for a queue (creates Worker and QueueEvents)
+	 * This should be called explicitly to process jobs in a queue
 	 */
-	async addJob(
-		queueName: string,
-		jobName: string,
-		jobData: Record<string, unknown>,
+	registerProcessor<T extends JobType = JobType>(
+		queueName: QueueName,
+		processor: (job: Job<JobDataMap[T]>) => Promise<unknown>,
+		opts?: { concurrency?: number }
+	): Worker {
+		// Ensure queue exists
+		this.getQueue(queueName);
+
+		// Check if worker already exists
+		if (this.workers.has(queueName)) {
+			this.logger.warn(
+				`[BullMqProvider] Worker already exists for "${queueName}"`
+			);
+			return this.workers.get(queueName) as Worker;
+		}
+
+		// Create worker with custom processor
+		const worker = new Worker(queueName, processor, {
+			connection: this.redisOptions,
+			concurrency: opts?.concurrency ?? 1,
+		});
+
+		// Setup worker event listeners
+		worker.on("completed", (job: Job) => {
+			this.logger.info(
+				`[BullMqProvider][${queueName}] Job ${job.id} completed successfully`
+			);
+		});
+
+		worker.on("failed", (job: Job | undefined, err: Error) => {
+			this.logger.error(
+				`[BullMqProvider][${queueName}] Job ${job?.id} failed with error: ${err.message}`
+			);
+		});
+
+		worker.on("error", (err: Error) => {
+			this.logger.error(
+				`[BullMqProvider][${queueName}] Worker error: ${err.message}`
+			);
+		});
+
+		this.workers.set(queueName, worker);
+		this.logger.info(
+			`[BullMqProvider] Worker registered for queue "${queueName}"`
+		);
+
+		// Create queue events listener if not exists
+		if (!this.queueEvents.has(queueName)) {
+			this.createQueueEventsListener(queueName);
+		}
+
+		return worker;
+	}
+
+	/**
+	 * Add a job to a specific queue with options
+	 * Generic type ensures job data matches the job type
+	 */
+	async addJob<T extends JobType>(
+		queueName: QueueName,
+		jobType: T,
+		jobData: JobDataMap[T],
 		options?: {
 			delay?: number;
 			attempts?: number;
@@ -76,9 +132,9 @@ export class BullMqProvider {
 		}
 	) {
 		const queue = this.getQueue(queueName);
-		const job = await queue.add(jobName, jobData, options);
+		const job = await queue.add(jobType, jobData, options);
 		this.logger.info(
-			`[BullMqProvider] Job "${jobName}" (ID: ${job.id}) added to queue "${queueName}"`
+			`[BullMqProvider] Job "${jobType}" (ID: ${job.id}) added to queue "${queueName}"`
 		);
 		return job;
 	}
@@ -86,11 +142,11 @@ export class BullMqProvider {
 	/**
 	 * Add multiple jobs in bulk to a queue
 	 */
-	async addBulkJobs(
-		queueName: string,
+	async addBulkJobs<T extends JobType>(
+		queueName: QueueName,
 		jobs: Array<{
-			name: string;
-			data: Record<string, unknown>;
+			name: T;
+			data: JobDataMap[T];
 			opts?: Record<string, unknown>;
 		}>
 	) {
@@ -105,7 +161,7 @@ export class BullMqProvider {
 	/**
 	 * Get a job by ID from a specific queue
 	 */
-	async getJob(queueName: string, jobId: string) {
+	async getJob(queueName: QueueName, jobId: string) {
 		const queue = this.getQueue(queueName);
 		const job = await queue.getJob(jobId);
 		return job;
@@ -114,7 +170,7 @@ export class BullMqProvider {
 	/**
 	 * Remove a job by ID from a specific queue
 	 */
-	async removeJob(queueName: string, jobId: string) {
+	async removeJob(queueName: QueueName, jobId: string) {
 		const queue = this.getQueue(queueName);
 		const job = await queue.getJob(jobId);
 		if (job) {
@@ -130,7 +186,7 @@ export class BullMqProvider {
 	/**
 	 * Pause a queue (stops processing new jobs)
 	 */
-	async pauseQueue(queueName: string) {
+	async pauseQueue(queueName: QueueName) {
 		const queue = this.getQueue(queueName);
 		await queue.pause();
 		this.logger.info(`[BullMqProvider] Queue "${queueName}" paused`);
@@ -139,7 +195,7 @@ export class BullMqProvider {
 	/**
 	 * Resume a paused queue
 	 */
-	async resumeQueue(queueName: string) {
+	async resumeQueue(queueName: QueueName) {
 		const queue = this.getQueue(queueName);
 		await queue.resume();
 		this.logger.info(`[BullMqProvider] Queue "${queueName}" resumed`);
@@ -148,7 +204,7 @@ export class BullMqProvider {
 	/**
 	 * Get queue job counts (waiting, active, completed, failed, delayed)
 	 */
-	async getQueueCounts(queueName: string) {
+	async getQueueCounts(queueName: QueueName) {
 		const queue = this.getQueue(queueName);
 		const counts = await queue.getJobCounts(
 			"waiting",
@@ -165,7 +221,7 @@ export class BullMqProvider {
 	 * Get jobs in a specific state
 	 */
 	async getJobs(
-		queueName: string,
+		queueName: QueueName,
 		state: "waiting" | "active" | "completed" | "failed" | "delayed",
 		start = 0,
 		end = 10
@@ -200,7 +256,7 @@ export class BullMqProvider {
 	 * Clean jobs from a queue (remove old completed/failed jobs)
 	 */
 	async cleanQueue(
-		queueName: string,
+		queueName: QueueName,
 		grace: number,
 		limit: number,
 		type: "completed" | "failed" = "completed"
@@ -216,7 +272,7 @@ export class BullMqProvider {
 	/**
 	 * Empty a queue (remove all jobs)
 	 */
-	async emptyQueue(queueName: string) {
+	async emptyQueue(queueName: QueueName) {
 		const queue = this.getQueue(queueName);
 		await queue.drain();
 		this.logger.info(`[BullMqProvider] Queue "${queueName}" emptied`);
@@ -225,7 +281,7 @@ export class BullMqProvider {
 	/**
 	 * Retry a failed job
 	 */
-	async retryJob(queueName: string, jobId: string) {
+	async retryJob(queueName: QueueName, jobId: string) {
 		const job = await this.getJob(queueName, jobId);
 		if (job) {
 			await job.retry();
@@ -240,7 +296,7 @@ export class BullMqProvider {
 	/**
 	 * Get queue metrics (for monitoring)
 	 */
-	async getQueueMetrics(queueName: string) {
+	async getQueueMetrics(queueName: QueueName) {
 		const queue = this.getQueue(queueName);
 		const [counts, isPaused, jobCounts] = await Promise.all([
 			queue.getJobCounts(),
@@ -271,62 +327,9 @@ export class BullMqProvider {
 	}
 
 	/**
-	 * Create a worker for a specific queue
-	 */
-	private createWorkerForQueue(queueName: string): Worker {
-		const worker = new Worker(
-			queueName,
-			async (job: Job) => {
-				this.logger.info(
-					`[BullMqProvider] Processing job "${job.name}" from queue "${queueName}"`
-				);
-
-				// Add your job processing logic here based on job.name
-				// You can use switch/case or if statements to handle different job types
-				await job.updateProgress(50);
-				this.logger.info(`[BullMqProvider] Job ${job.name} at 50%`);
-
-				await job.updateProgress(100);
-				this.logger.info(`[BullMqProvider] Job ${job.name} completed`);
-
-				return { jobId: job.id, completed: true };
-			},
-			{
-				connection: this.redisOptions,
-			}
-		);
-
-		// Setup worker event listeners
-		worker.on("completed", (job: Job) => {
-			this.logger.info(
-				`[BullMqProvider][${queueName}] Job ${job.id} completed successfully`
-			);
-		});
-
-		worker.on("failed", (job: Job | undefined, err: Error) => {
-			this.logger.error(
-				`[BullMqProvider][${queueName}] Job ${job?.id} failed with error: ${err.message}`
-			);
-		});
-
-		worker.on("error", (err: Error) => {
-			this.logger.error(
-				`[BullMqProvider][${queueName}] Worker error: ${err.message}`
-			);
-		});
-
-		this.workers.set(queueName, worker);
-		this.logger.info(
-			`[BullMqProvider] Worker created for queue "${queueName}"`
-		);
-
-		return worker;
-	}
-
-	/**
 	 * Create QueueEvents listener for monitoring queue events
 	 */
-	private createQueueEventsListener(queueName: string): QueueEvents {
+	private createQueueEventsListener(queueName: QueueName): QueueEvents {
 		const queueEvents = new QueueEvents(queueName, {
 			connection: this.redisOptions,
 		});
@@ -388,6 +391,14 @@ export class BullMqProvider {
 			await queueEvents.close();
 			this.logger.info(
 				`[BullMqProvider] QueueEvents closed for queue "${queueName}"`
+			);
+		}
+
+		// Close all queues
+		for (const [queueName, queue] of this.queues.entries()) {
+			await queue.close();
+			this.logger.info(
+				`[BullMqProvider] Queue closed for queue "${queueName}"`
 			);
 		}
 
