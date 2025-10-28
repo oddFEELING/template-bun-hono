@@ -22,6 +22,9 @@ const envSchema = z.object({
 	//  Rate Limiting
 	ENABLE_RATE_LIMITING: z.string().optional().default("false"),
 	NODE_ENV: z.string().optional().default("development"),
+
+	//  Graceful Shutdown
+	SHUTDOWN_TIMEOUT: z.number().default(30_000), // 30 seconds default timeout for graceful shutdown
 });
 
 // Parse and validate environment variables
