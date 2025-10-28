@@ -56,7 +56,9 @@ try {
 	});
 } catch {
 	// BullMQ provider might not be initialized if queues haven't been used yet
-	appLogger.debug("[Shutdown] BullMQ provider not initialized, skipping cleanup");
+	appLogger.debug(
+		"[Shutdown] BullMQ provider not initialized, skipping cleanup"
+	);
 }
 
 // 2. Close Redis connections
@@ -69,7 +71,9 @@ try {
 	});
 } catch {
 	// Redis provider might not be initialized
-	appLogger.debug("[Shutdown] Redis provider not initialized, skipping cleanup");
+	appLogger.debug(
+		"[Shutdown] Redis provider not initialized, skipping cleanup"
+	);
 }
 
 // Note: Neon database connections are serverless and don't require explicit cleanup

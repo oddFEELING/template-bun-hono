@@ -1,5 +1,5 @@
-import type { Server } from "bun";
 import { env } from "@/config";
+import type { Server } from "bun";
 import type { AppLogger } from "./logger";
 
 /**
@@ -89,8 +89,10 @@ export class ShutdownManager {
 		try {
 			// Stop the server from accepting new connections
 			this.logger.info("[ShutdownManager] Stopping server...");
-			this.server.stop();
-			this.logger.info("[ShutdownManager] Server stopped accepting new requests");
+			await this.server.stop();
+			this.logger.info(
+				"[ShutdownManager] Server stopped accepting new requests"
+			);
 
 			// Execute all cleanup handlers with timeout protection
 			await this.executeCleanupHandlers();
@@ -127,9 +129,12 @@ export class ShutdownManager {
 			`[ShutdownManager] Running ${this.cleanupHandlers.length} cleanup handler(s)...`
 		);
 
+		// Store timeout ID so we can clear it when cleanup completes
+		let timeoutId: NodeJS.Timeout | undefined;
+
 		// Create a promise that rejects on timeout
 		const timeoutPromise = new Promise<never>((_, reject) => {
-			setTimeout(() => {
+			timeoutId = setTimeout(() => {
 				reject(
 					new Error(
 						`Shutdown timeout exceeded (${this.shutdownTimeout}ms), forcing exit`
@@ -168,7 +173,11 @@ export class ShutdownManager {
 				`[ShutdownManager] Cleanup timeout or error: ${error instanceof Error ? error.message : String(error)}`
 			);
 			throw error;
+		} finally {
+			// Clear the timeout to prevent memory leak and avoid firing after race settles
+			if (timeoutId !== undefined) {
+				clearTimeout(timeoutId);
+			}
 		}
 	}
 }
-
