@@ -1,4 +1,4 @@
-// Import service auto-discovery to register all services
+// Import service auto-discovery to register all services (includes Sentry init)
 import "./_init";
 // Import route auto-discovery to register all routes
 import "./_init-routes";

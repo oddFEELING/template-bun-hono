@@ -35,29 +35,8 @@ export class ${className}Provider {
   }
 
   /**
-   * Initialize the ${providerName} provider
-   * Setup connections, configure API clients, etc.
+   * Add your provider methods here
    */
-  async initialize() {
-    this.logger.info("Initializing ${className}Provider");
-
-  }
-
-  /**
-   * Example method - replace with your integration logic
-   */
-  async performAction() {
-    this.logger.info("${className}Provider performing action");
-    return { success: true };
-  }
-
-  /**
-   * Cleanup and disconnect
-   * Called when shutting down the application
-   */
-  async disconnect() {
-    this.logger.info("Disconnecting ${className}Provider");
-  }
 }
 `;
 }

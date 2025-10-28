@@ -1,15 +1,19 @@
 import { env } from "@/config/env.config";
+import { errorResponse } from "@/lib";
 import { getService } from "@/lib/_internal/get-service";
 import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
 import routes from "@/modules/app";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import * as Sentry from "@sentry/bun";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 import { logger as honoLogger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
 import { secureHeaders } from "hono/secure-headers";
 import { timeout } from "hono/timeout";
 import { injectSession } from "./auth.middleware";
+import { createBullBoardMiddleware } from "./bull-board.middleware";
 import { addContextVariables } from "./context.middleware";
 
 const logger = getService(AppLogger);
@@ -20,6 +24,19 @@ export const addAppMiddleware = (app: OpenAPIHono<AppEnv>) => {
 
 	// Inject session into all routes
 	app.use(injectSession);
+
+	// Set Sentry context before errors can occur
+	app.use((c, next) => {
+		Sentry.setTag("request_id", c.get("requestId"));
+
+		if (c.get("user")) {
+			Sentry.setUser({
+				id: c.get("user")?.id,
+				email: c.get("user")?.email,
+			});
+		}
+		return next();
+	});
 
 	// Global middleware with configurable CORS origins from environment
 	app.use(
@@ -32,6 +49,27 @@ export const addAppMiddleware = (app: OpenAPIHono<AppEnv>) => {
 	app.use(timeout(10_000));
 	app.use(honoLogger(logger.info.bind(logger)));
 
+	// Error handler - captures all unhandled errors and sends to Sentry
+	app.onError((err, c) => {
+		// Capture exception in Sentry
+		Sentry.captureException(err);
+
+		// Return appropriate response
+		if (err instanceof HTTPException) {
+			return err.getResponse();
+		}
+		return errorResponse(c, err.message);
+	});
+
 	// Mount the app router (which includes docs + all API routes)
 	app.route("/", routes);
+
+	// Test error endpoint for Sentry
+	app.get("/error", (c) => {
+		logger.info("User triggered test error");
+		Sentry.logger.info("User triggered test log", { action: "test_log" });
+		return c.json({ message: "Test error" });
+	});
+
+	createBullBoardMiddleware(app);
 };
