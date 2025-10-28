@@ -21,13 +21,17 @@
         "noForEach": "off"
       },
       "performance": {
-        "noBarrelFile": "off"
+        "noBarrelFile": "off",
+        "noNamespaceImport": "off"
       },
       "style": {
         "useConsistentTypeDefinitions": "off",
         "useImportType": "off",
         "noMagicNumbers": "off",
         "useFilenamingConvention": "off"
+      },
+      "suspicious": {
+        "useAwait": "off"
       },
       "nursery": {
         "noEmptySource": "off"

@@ -6,6 +6,25 @@ const envSchema = z.object({
 	BETTER_AUTH_URL: z.string(),
 	BETTER_AUTH_SECRET: z.string(),
 	CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
+
+	//  Redis
+	REDIS_HOST: z.string().default("localhost"),
+	REDIS_PORT: z.coerce.number().default(6379),
+	REDIS_PASSWORD: z.string().optional().default(""),
+	REDIS_USERNAME: z.string().optional().default(""),
+	REDIS_DATABASE: z.coerce.number().default(0),
+	REDIS_KEY_PREFIX: z.string().optional().default("app:"),
+	REDIS_CACHE_TTL: z.coerce.number().default(3600), // 1 hour default cache TTL
+
+	//  Sentry DSN
+	SENTRY_DSN: z.string().optional().default(""),
+
+	//  Rate Limiting
+	ENABLE_RATE_LIMITING: z.string().optional().default("false"),
+	NODE_ENV: z.string().optional().default("development"),
+
+	//  Graceful Shutdown
+	SHUTDOWN_TIMEOUT: z.coerce.number().default(30_000), // 30 seconds default timeout for graceful shutdown
 });
 
 // Parse and validate environment variables

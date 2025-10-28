@@ -17,6 +17,7 @@ export const HTTP_STATUS = {
 	NOT_FOUND: 404,
 	CONFLICT: 409,
 	UNPROCESSABLE: 422,
+	TOO_MANY_REQUESTS: 429,
 
 	// Server error codes
 	SERVER_ERROR: 500,
@@ -139,13 +140,13 @@ export function forbiddenResponse(c: Context, message = "Forbidden") {
 export function errorResponse(
 	c: Context,
 	message: string,
-	status = HTTP_STATUS.SERVER_ERROR
+	status: number = HTTP_STATUS.SERVER_ERROR
 ) {
 	return c.json(
 		{
 			error: "error",
 			message,
 		},
-		status
+		status as never
 	);
 }
