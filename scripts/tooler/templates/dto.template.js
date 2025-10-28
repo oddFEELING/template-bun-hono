@@ -44,19 +44,6 @@ const ${varName}EntitySchema = z
   })
   .openapi("${className}");
 
-// ~ ======= ID Parameter Schema ======= ~
-const idParamSchema = z
-  .object({
-    id: z.uuid().openapi({
-      param: {
-        name: "id",
-        in: "path",
-      },
-      description: "UUID of the ${moduleName}",
-    }),
-  })
-  .openapi("${className}IdParam");
-
 // ~ ======= Create ${className} Schema ======= ~
 const create${className}Schema = z
   .object({
@@ -108,31 +95,13 @@ const ${varName}ResponseSchema = ${varName}EntitySchema.openapi(
   "${className}Response"
 );
 
-// ~ ======= TypeScript Types ======= ~
-type ${className}Entity = z.infer<typeof ${varName}EntitySchema>;
-type IdParamDTO = z.infer<typeof idParamSchema>;
-type Create${className}DTO = z.infer<typeof create${className}Schema>;
-type Update${className}DTO = z.infer<typeof update${className}Schema>;
-type Query${className}DTO = z.infer<typeof query${className}Schema>;
-type ${className}ResponseDTO = z.infer<typeof ${varName}ResponseSchema>;
-
 // ~ ======= Exports ======= ~
 export {
   ${varName}EntitySchema,
-  idParamSchema,
   create${className}Schema,
   update${className}Schema,
   query${className}Schema,
   ${varName}ResponseSchema,
-};
-
-export type {
-  ${className}Entity,
-  IdParamDTO,
-  Create${className}DTO,
-  Update${className}DTO,
-  Query${className}DTO,
-  ${className}ResponseDTO,
 };
 `;
 }

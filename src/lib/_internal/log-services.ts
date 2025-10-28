@@ -1,5 +1,5 @@
 import { ServiceRegistry } from "@/decorators/service.decorator";
-import { AppLogger } from "./logger";
+import { AppLogger } from "../logger";
 
 /**
  * Logs all registered services grouped by type

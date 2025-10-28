@@ -14,7 +14,7 @@ export function createSuccessSchema<T extends z.ZodTypeAny>(dataSchema: T) {
 	return z.object({
 		success: z.literal(true),
 		data: dataSchema,
-		status: z.number(),
+		status: z.literal(200),
 	});
 }
 
@@ -27,7 +27,7 @@ export function createListSchema<T extends z.ZodTypeAny>(itemSchema: T) {
 	return z.object({
 		success: z.literal(true),
 		data: z.array(itemSchema).nullable(),
-		status: z.number(),
+		status: z.literal(200),
 	});
 }
 
@@ -45,12 +45,25 @@ export function createSingleSchema<T extends z.ZodTypeAny>(itemSchema: T) {
 }
 
 /**
+ * Created response schema factory (for 201 status)
+ * @param itemSchema - The schema for the created item
+ * @returns Created response schema with 201 status
+ */
+export function createCreatedSchema<T extends z.ZodTypeAny>(itemSchema: T) {
+	return z.object({
+		success: z.literal(true),
+		data: itemSchema.nullable(),
+		status: z.literal(201),
+	});
+}
+
+/**
  * Base success response (no specific data type)
  */
 export const baseSuccessResponse = z.object({
 	success: z.literal(true),
 	data: z.any(),
-	status: z.number(),
+	status: z.literal(200),
 });
 
 /**
@@ -59,7 +72,7 @@ export const baseSuccessResponse = z.object({
 export const baseListResponse = z.object({
 	success: z.literal(true),
 	data: z.array(z.any()).nullable(),
-	status: z.number(),
+	status: z.literal(200),
 });
 
 /**
@@ -68,5 +81,5 @@ export const baseListResponse = z.object({
 export const baseSingleResponse = z.object({
 	success: z.literal(true),
 	data: z.any().nullable(),
-	status: z.number(),
+	status: z.literal(200),
 });

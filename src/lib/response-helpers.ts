@@ -24,17 +24,14 @@ export const HTTP_STATUS = {
 } as const;
 
 /**
- * Standard success response format
+ * Standard success response
+ * Returns the provided data as JSON with HTTP 200 OK status
  * @param c - Hono context
- * @param data - Response data
- * @param status - HTTP status code (default: 200)
- * @returns JSON response with success format
+ * @param data - Response data (sent directly without envelope)
+ * @returns JSON response with 200 status
  */
 export function successResponse<T>(c: Context, data: T) {
-	return c.json(
-		{ success: true as const, data, status: HTTP_STATUS.OK },
-		HTTP_STATUS.OK
-	);
+	return c.json(data, HTTP_STATUS.OK);
 }
 
 /**
@@ -44,14 +41,12 @@ export function successResponse<T>(c: Context, data: T) {
  * @returns JSON response with 201 status
  */
 export function createdResponse<T>(c: Context, data: T) {
-	return c.json(
-		{ success: true as const, data, status: HTTP_STATUS.CREATED },
-		HTTP_STATUS.CREATED
-	);
+	return c.json(data, HTTP_STATUS.CREATED);
 }
 
 /**
  * Not found error response
+ * Matches the notFoundErrorDto schema structure
  * @param c - Hono context
  * @param message - Error message (default: "Resource not found")
  * @returns JSON response with 404 status
@@ -144,17 +139,12 @@ export function forbiddenResponse(c: Context, message = "Forbidden") {
 export function errorResponse(
 	c: Context,
 	message: string,
-	status: number = HTTP_STATUS.SERVER_ERROR
+	status = HTTP_STATUS.SERVER_ERROR
 ) {
 	return c.json(
 		{
-			success: false as const,
-			data: null,
-			status,
-			error: {
-				type: "error" as const,
-				message,
-			},
+			error: "error",
+			message,
 		},
 		status
 	);

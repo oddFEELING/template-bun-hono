@@ -1,7 +1,7 @@
-import { createMiddleware } from "hono/factory";
-import { getServices } from "@/lib/get-service";
+import { getServices } from "@/lib/_internal/get-service";
 import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
+import { createMiddleware } from "hono/factory";
 
 /**
  * Context middleware

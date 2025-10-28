@@ -50,22 +50,13 @@ const ${varName}ResponseSchema = z
   })
   .openapi("${className}Response");
 
-// ~ ======= TypeScript Types ======= ~
-type ${varName}Config = z.infer<typeof ${varName}ConfigSchema>;
-type ${varName}Request = z.infer<typeof ${varName}RequestSchema>;
-type ${varName}Response = z.infer<typeof ${varName}ResponseSchema>;
-
 // ~ ======= Exports ======= ~
+// Schemas are exported for auto-discovery and registered in SchemaRegistry
+// Access types via: SchemaRegistryType<"schemaName">
 export {
   ${varName}ConfigSchema,
-    ${varName}RequestSchema,
+  ${varName}RequestSchema,
   ${varName}ResponseSchema,
-};
-
-export type {
-  ${varName}Config,
-  ${varName}Request,
-  ${varName}Response,
 };
 `;
 }

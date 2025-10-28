@@ -11,9 +11,9 @@ export function generateSimpleRouteTemplate(routeName, version = "v1") {
 	const varName = toCamelCase(routeName);
 
 	return `import { OpenAPIHono } from "@hono/zod-openapi";
-import { getServices } from "@/lib/get-service";
-import { registerRoute } from "@/lib/route-registry";
-import type { RouteConfig } from "@/lib/route-registry";
+import { getServices } from "@/lib/_internal/get-service";
+import { registerRoute } from "@/lib/_internal/route-registry";
+import type { RouteConfig } from "@/lib/_internal/route-registry";
 import type { AppEnv } from "@/lib/types";
 import { successResponse } from "@/lib/response-helpers";
 import { ${className}Service } from "../${routeName}.service";

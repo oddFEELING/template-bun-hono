@@ -73,28 +73,15 @@ const queryResponseSchema = z
   })
   .openapi("${className}QueryResponse");
 
-// ~ ======= TypeScript Types ======= ~
-type MessageRequestDTO = z.infer<typeof messageRequestSchema>;
-type QueryParamDTO = z.infer<typeof queryParamSchema>;
-type HelloResponseDTO = z.infer<typeof helloResponseSchema>;
-type EchoResponseDTO = z.infer<typeof echoResponseSchema>;
-type QueryResponseDTO = z.infer<typeof queryResponseSchema>;
-
 // ~ ======= Exports ======= ~
+// Schemas are exported for auto-discovery and registered in SchemaRegistry
+// Access types via: SchemaRegistryType<"schemaName">
 export {
   messageRequestSchema,
   queryParamSchema,
   helloResponseSchema,
   echoResponseSchema,
   queryResponseSchema,
-};
-
-export type {
-  MessageRequestDTO,
-  QueryParamDTO,
-  HelloResponseDTO,
-  EchoResponseDTO,
-  QueryResponseDTO,
 };
 `;
 }

@@ -10,9 +10,9 @@ export function generateRoutesIndexTemplate(moduleName, version = "v1") {
 	const className = toPascalCase(moduleName);
 	const varName = toCamelCase(moduleName);
 	return `import { OpenAPIHono } from "@hono/zod-openapi";
-import { getServices } from "@/lib/get-service";
-import { registerRoute } from "@/lib/route-registry";
-import type { RouteConfig } from "@/lib/route-registry";
+import { getServices } from "@/lib/_internal/get-service";
+import { registerRoute } from "@/lib/_internal/route-registry";
+import type { RouteConfig } from "@/lib/_internal/route-registry";
 import type { AppEnv } from "@/lib/types";
 import {
   successResponse,

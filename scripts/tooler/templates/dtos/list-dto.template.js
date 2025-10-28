@@ -5,24 +5,28 @@ import { toCamelCase, toPascalCase } from "../../utils/string.js";
  * @param {string} moduleName - The name of the module
  * @returns {string} The DTO template content
  */
-export function generateListUsersDtoTemplate(moduleName) {
+export function generateListDtoTemplate(moduleName) {
 	const className = toPascalCase(moduleName);
 	const varName = toCamelCase(moduleName);
 	return `import { z } from "@hono/zod-openapi";
-import { ${varName}EntitySchema } from "./${moduleName}.dto";
+import { ${varName}EntityDto } from "./${moduleName}.dto";
 
 /**
- * List ${className}s DTO schemas
+ * List ${className}s DTOs
  * Used for GET /${moduleName} endpoint with pagination
  */
 
-// ~ ======= Query Schema ======= ~
-const list${className}sQuerySchema = z
+// ~ ======= Query DTO ======= ~
+const list${className}sQueryDto = z
   .object({
     page: z
-      .string()
-      .optional()
-      .default("1")
+      .preprocess(
+        (val) => {
+          const num = Number(val);
+          return Number.isNaN(num) ? 1 : num;
+        },
+        z.number().int().min(1).default(1)
+      )
       .openapi({
         param: {
           name: "page",
@@ -32,9 +36,13 @@ const list${className}sQuerySchema = z
         example: "1",
       }),
     limit: z
-      .string()
-      .optional()
-      .default("10")
+      .preprocess(
+        (val) => {
+          const num = Number(val);
+          return Number.isNaN(num) ? 10 : num;
+        },
+        z.number().int().min(1).max(100).default(10)
+      )
       .openapi({
         param: {
           name: "limit",
@@ -47,10 +55,10 @@ const list${className}sQuerySchema = z
   })
   .openapi("List${className}sQuery");
 
-// ~ ======= Response Schema ======= ~
-const list${className}sResponseSchema = z
+// ~ ======= Response DTO ======= ~
+const list${className}sResponseDto = z
   .object({
-    data: z.array(${varName}EntitySchema).openapi({
+    data: z.array(${varName}EntityDto).openapi({
       description: "Array of ${moduleName} records",
     }),
     pagination: z
@@ -71,6 +79,22 @@ const list${className}sResponseSchema = z
           description: "Total number of pages",
           example: 10,
         }),
+        hasNext: z.boolean().openapi({
+          description: "Whether there is a next page",
+          example: true,
+        }),
+        hasPrev: z.boolean().openapi({
+          description: "Whether there is a previous page",
+          example: false,
+        }),
+        nextPage: z.number().nullable().openapi({
+          description: "Next page number (null if no next page)",
+          example: 2,
+        }),
+        prevPage: z.number().nullable().openapi({
+          description: "Previous page number (null if no previous page)",
+          example: null,
+        }),
       })
       .openapi({
         description: "Pagination metadata",
@@ -78,13 +102,9 @@ const list${className}sResponseSchema = z
   })
   .openapi("List${className}sResponse");
 
-// ~ ======= TypeScript Types ======= ~
-type List${className}sQueryDTO = z.infer<typeof list${className}sQuerySchema>;
-type List${className}sResponseDTO = z.infer<typeof list${className}sResponseSchema>;
-
 // ~ ======= Exports ======= ~
-export { list${className}sQuerySchema, list${className}sResponseSchema };
-
-export type { List${className}sQueryDTO, List${className}sResponseDTO };
+// DTOs are exported for auto-discovery and registered in SchemaRegistry
+// Access types via: SchemaRegistryType<"dtoName">
+export { list${className}sQueryDto, list${className}sResponseDto };
 `;
 }

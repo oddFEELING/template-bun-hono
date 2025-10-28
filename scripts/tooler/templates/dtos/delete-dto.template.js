@@ -5,17 +5,17 @@ import { toPascalCase } from "../../utils/string.js";
  * @param {string} moduleName - The name of the module
  * @returns {string} The DTO template content
  */
-export function generateDeleteUserDtoTemplate(moduleName) {
+export function generateDeleteDtoTemplate(moduleName) {
 	const className = toPascalCase(moduleName);
 	return `import { z } from "@hono/zod-openapi";
 
 /**
- * Delete ${className} DTO schemas
+ * Delete ${className} DTOs
  * Used for DELETE /${moduleName}/:id endpoint
  */
 
-// ~ ======= Response Schema ======= ~
-const delete${className}ResponseSchema = z
+// ~ ======= Response DTO ======= ~
+const delete${className}ResponseDto = z
   .object({
     success: z.boolean().openapi({
       description: "Whether the deletion was successful",
@@ -28,12 +28,7 @@ const delete${className}ResponseSchema = z
   })
   .openapi("Delete${className}Response");
 
-// ~ ======= TypeScript Types ======= ~
-type Delete${className}ResponseDTO = z.infer<typeof delete${className}ResponseSchema>;
-
-// ~ ======= Exports ======= ~
-export { delete${className}ResponseSchema };
-
-export type { Delete${className}ResponseDTO };
+ // ~ ======= Exports ======= ~
+export { delete${className}ResponseDto };
 `;
 }

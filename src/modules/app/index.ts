@@ -1,9 +1,9 @@
+import { formatValidationError } from "@/lib/_internal/format-validation-error";
+import { getService } from "@/lib/_internal/get-service";
+import { getRegisteredRoutes } from "@/lib/_internal/route-registry";
+import { autoRegisterSchemas } from "@/lib/_internal/schema-auto-discovery";
 import { auth } from "@/lib/auth";
-import { formatValidationError } from "@/lib/format-validation-error";
-import { getService } from "@/lib/get-service";
 import { AppLogger } from "@/lib/logger";
-import { getRegisteredRoutes } from "@/lib/route-registry";
-import { autoRegisterSchemas } from "@/lib/schema-auto-discovery";
 import type { AppEnv } from "@/lib/types";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
@@ -20,12 +20,15 @@ const app = new OpenAPIHono<AppEnv>({
 	},
 });
 
+// ~ ======= Register all schemas with THIS app instance ======= ~
+await autoRegisterSchemas(app);
+
 // ~ ======= Mount Better Auth Handler ======= ~
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 // ~ ======= Register all module routes ======= ~
 import { apiConfig } from "@/config/api.config";
-import { logRegisteredSchemas } from "@/lib/log-schemas";
+import { logRegisteredSchemas } from "@/lib/_internal/log-schemas";
 
 const routes = getRegisteredRoutes();
 const { prefix: apiPrefix, defaultVersion } = apiConfig;
@@ -49,10 +52,8 @@ for (const route of routes) {
 
 logger.info(`[ Routes ] Total: ${routes.length} modules registered\n`);
 
-// ~ ======= Auto-discover and register schemas ======= ~
-await autoRegisterSchemas(app);
-
 // ~ ======= Log registered schemas ======= ~
+// Note: Schemas are already registered in _init.ts before routes are imported
 logRegisteredSchemas(logger);
 
 // ~ ======= OpenAPI Documentation ======= ~

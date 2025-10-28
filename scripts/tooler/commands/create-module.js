@@ -1,12 +1,12 @@
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { generateCreateUserDtoTemplate } from "../templates/dtos/createUser-dto.template.js";
-import { generateDeleteUserDtoTemplate } from "../templates/dtos/deleteUser-dto.template.js";
-import { generateGetUserDtoTemplate } from "../templates/dtos/getUser-dto.template.js";
-import { generateListUsersDtoTemplate } from "../templates/dtos/listUsers-dto.template.js";
-import { generateUpdateUserDtoTemplate } from "../templates/dtos/updateUser-dto.template.js";
-import { generateUserDtoTemplate } from "../templates/dtos/user-dto.template.js";
+import { generateCreateDtoTemplate } from "../templates/dtos/create-dto.template.js";
+import { generateDeleteDtoTemplate } from "../templates/dtos/delete-dto.template.js";
+import { generateDtoTemplate } from "../templates/dtos/dto.template.js";
+import { generateGetDtoTemplate } from "../templates/dtos/get-dto.template.js";
+import { generateListDtoTemplate } from "../templates/dtos/list-dto.template.js";
+import { generateUpdateDtoTemplate } from "../templates/dtos/update-dto.template.js";
 import { generateOpenApiTemplate } from "../templates/openapi.template.js";
 import { generateRoutesIndexTemplate } from "../templates/routes.template.js";
 import { generateSchemaTemplate } from "../templates/schema.template.js";
@@ -100,42 +100,42 @@ export async function createModule(
 			// Base entity DTO
 			await writeFile(
 				join(baseDir, "interfaces", `${moduleName}.dto.ts`),
-				generateUserDtoTemplate(moduleName)
+				generateDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/${moduleName}.dto.ts created`);
 
 			// Create DTO
 			await writeFile(
 				join(baseDir, "interfaces", `create${className}.dto.ts`),
-				generateCreateUserDtoTemplate(moduleName)
+				generateCreateDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/create${className}.dto.ts created`);
 
 			// Update DTO
 			await writeFile(
 				join(baseDir, "interfaces", `update${className}.dto.ts`),
-				generateUpdateUserDtoTemplate(moduleName)
+				generateUpdateDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/update${className}.dto.ts created`);
 
 			// Get DTO
 			await writeFile(
 				join(baseDir, "interfaces", `get${className}.dto.ts`),
-				generateGetUserDtoTemplate(moduleName)
+				generateGetDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/get${className}.dto.ts created`);
 
 			// List DTO
 			await writeFile(
 				join(baseDir, "interfaces", `list${className}s.dto.ts`),
-				generateListUsersDtoTemplate(moduleName)
+				generateListDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/list${className}s.dto.ts created`);
 
 			// Delete DTO
 			await writeFile(
 				join(baseDir, "interfaces", `delete${className}.dto.ts`),
-				generateDeleteUserDtoTemplate(moduleName)
+				generateDeleteDtoTemplate(moduleName)
 			);
 			logSuccess(`interfaces/delete${className}.dto.ts created`);
 		}

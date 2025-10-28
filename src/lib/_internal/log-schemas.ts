@@ -1,4 +1,4 @@
-import type { AppLogger } from "./logger";
+import type { AppLogger } from "../logger";
 import { SchemaRegistry } from "./schema-registry";
 
 /**
@@ -24,6 +24,14 @@ export function logRegisteredSchemas(logger: AppLogger): void {
 	const allSchemas = SchemaRegistry.getAll();
 
 	for (const [schemaName, schemaInfo] of allSchemas) {
+		// Validate schema metadata and module exist and are valid
+		if (
+			!schemaInfo?.metadata?.module ||
+			typeof schemaInfo.metadata.module !== "string"
+		) {
+			continue;
+		}
+
 		const module = schemaInfo.metadata.module;
 
 		if (module.startsWith("provider:")) {
@@ -70,7 +78,11 @@ export function logRegisteredSchemas(logger: AppLogger): void {
 	logger.info("[ Schema Statistics ]");
 	logger.info(`  ├─ Total: ${stats.total} schemas`);
 
-	if (Object.keys(stats.byType).length > 0) {
+	if (
+		stats.byType &&
+		typeof stats.byType === "object" &&
+		Object.keys(stats.byType).length > 0
+	) {
 		logger.info("  ├─ By Type:");
 		for (const [type, count] of Object.entries(stats.byType)) {
 			logger.info(`  │  ├─ ${type}: ${count}`);

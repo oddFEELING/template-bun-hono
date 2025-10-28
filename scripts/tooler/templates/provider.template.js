@@ -27,7 +27,10 @@ import { AppLogger } from "@/lib/logger";
  */
 ${decorator}
 export class ${className}Provider {
-  constructor(private readonly logger: AppLogger) {
+  private readonly logger: AppLogger;
+
+  constructor(logger: AppLogger) {
+    this.logger = logger;
     this.logger.info("${className}Provider initialized");
   }
 

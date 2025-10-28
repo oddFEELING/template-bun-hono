@@ -1,11 +1,6 @@
-import type { ZodType } from "zod";
-import type { SchemaIdentifier } from "../_generated/schemas";
-
-/**
- * Type alias for any Zod schema type
- */
-// biome-ignore lint/suspicious/noExplicitAny: This type intentionally accepts any Zod schema
-type AnyZodSchema = ZodType<any, any, any>;
+/** biome-ignore-all lint/suspicious/noExplicitAny: <Relaxing the types for schema registry> */
+import type { ZodTypeAny } from "zod";
+import type { SchemaIdentifier } from "../../_generated/schemas";
 
 /**
  * Metadata stored for each registered schema
@@ -23,7 +18,7 @@ interface SchemaMetadata {
  * Complete schema information including the Zod schema and metadata
  */
 interface SchemaInfo {
-	schema: AnyZodSchema;
+	schema: ZodTypeAny;
 	metadata: SchemaMetadata;
 }
 
@@ -43,9 +38,24 @@ export class SchemaRegistry {
 	 */
 	static register(
 		name: string,
-		schema: AnyZodSchema,
+		schema: ZodTypeAny,
 		metadata: Partial<SchemaMetadata> = {}
 	): void {
+		// Check for duplicate schema names
+		if (SchemaRegistry.schemas.has(name)) {
+			const existing = SchemaRegistry.schemas.get(name);
+			const newLocation = metadata.location || "unknown";
+			const existingLocation = existing?.metadata.location || "unknown";
+
+			throw new Error(
+				`\n❌ DUPLICATE SCHEMA NAME: "${name}"\n\n` +
+					`   First registered at:  ${existingLocation}\n` +
+					`   Duplicate found at:   ${newLocation}\n\n` +
+					"   Schema names must be unique across the entire application.\n" +
+					"   Please rename one of these schemas to resolve the conflict.\n"
+			);
+		}
+
 		SchemaRegistry.schemas.set(name, {
 			schema,
 			metadata: {
@@ -56,15 +66,6 @@ export class SchemaRegistry {
 				registeredAt: new Date(),
 			},
 		});
-	}
-
-	/**
-	 * Retrieves a schema by name
-	 * Returns undefined if schema not found
-	 * Provides autocomplete for all registered schema names
-	 */
-	static get(name: SchemaIdentifier): AnyZodSchema | undefined {
-		return SchemaRegistry.schemas.get(name)?.schema;
 	}
 
 	/**
@@ -115,10 +116,10 @@ export class SchemaRegistry {
 	static validate(
 		schemaName: SchemaIdentifier,
 		data: unknown
-	): ReturnType<AnyZodSchema["safeParse"]> {
-		const schema = SchemaRegistry.get(schemaName);
+	): ReturnType<ZodTypeAny["safeParse"]> {
+		const schemaInfo = SchemaRegistry.schemas.get(schemaName);
 
-		if (!schema) {
+		if (!schemaInfo) {
 			throw new Error(
 				`Schema "${schemaName}" not found in registry. ` +
 					`Available schemas: ${SchemaRegistry.list().slice(0, 10).join(", ")}${
@@ -127,88 +128,30 @@ export class SchemaRegistry {
 			);
 		}
 
-		return schema.safeParse(data);
+		return schemaInfo.schema.safeParse(data);
 	}
 
 	/**
 	 * Parses data against a registered schema
 	 * Throws ZodError if validation fails
-	 * Provides autocomplete for schema names and compile-time validation
-	 */
-	static parse<T = unknown>(schemaName: SchemaIdentifier, data: unknown): T {
-		const schema = SchemaRegistry.get(schemaName);
-
-		if (!schema) {
-			throw new Error(`Schema "${schemaName}" not found in registry`);
-		}
-
-		return schema.parse(data) as T;
-	}
-
-	// ========== CONVENIENCE METHODS ==========
-
-	/**
-	 * Retrieves multiple schemas by name with variadic arguments
-	 * Returns object with schema names as keys for destructuring
-	 * Provides full autocomplete and compile-time validation
+	 * Provides autocomplete for schema names
 	 *
-	 * @example
-	 * const { messageRequestSchema, queryParamSchema } = SchemaRegistry.getSchemas(
-	 *   "messageRequestSchema",
-	 *   "queryParamSchema"
-	 * );
+	 * Note: Returns unknown type. Use z.infer<typeof schema> or type assertions
+	 * after parsing if you need a specific static type.
 	 */
-	static getSchemas<T extends SchemaIdentifier>(
-		...schemaNames: T[]
-	): Record<T, AnyZodSchema> {
-		const result: Record<string, AnyZodSchema> = {};
+	static parse(schemaName: SchemaIdentifier, data: unknown): unknown {
+		const schemaInfo = SchemaRegistry.schemas.get(schemaName);
 
-		for (const name of schemaNames) {
-			const schema = SchemaRegistry.get(name);
-
-			if (!schema) {
-				throw new Error(
-					`Schema "${name}" not found in registry. ` +
-						`Available: ${SchemaRegistry.list().join(", ")}`
-				);
-			}
-
-			result[name] = schema;
+		if (!schemaInfo) {
+			throw new Error(
+				`Schema "${schemaName}" not found in registry. ` +
+					`Available schemas: ${SchemaRegistry.list().slice(0, 10).join(", ")}${
+						SchemaRegistry.schemas.size > 10 ? "..." : ""
+					}`
+			);
 		}
 
-		return result as Record<T, AnyZodSchema>;
-	}
-
-	/**
-	 * Retrieves schemas with custom aliases using object mapping
-	 * Similar to getServices() pattern
-	 * Provides autocomplete for schema names and compile-time validation
-	 *
-	 * @example
-	 * const schemas = SchemaRegistry.getSchemasMap({
-	 *   message: "messageRequestSchema",
-	 *   query: "queryParamSchema",
-	 * });
-	 */
-	static getSchemasMap<T extends Record<string, SchemaIdentifier>>(
-		schemaMap: T
-	): { [K in keyof T]: AnyZodSchema } {
-		const result: Record<string, AnyZodSchema> = {};
-
-		for (const [alias, schemaName] of Object.entries(schemaMap)) {
-			const schema = SchemaRegistry.get(schemaName);
-
-			if (!schema) {
-				throw new Error(
-					`Schema "${schemaName}" not found in registry. ` +
-						`Available: ${SchemaRegistry.list().join(", ")}`
-				);
-			}
-
-			result[alias] = schema;
-		}
-
-		return result as { [K in keyof T]: AnyZodSchema };
+		return schemaInfo.schema.parse(data);
 	}
 
 	// ========== QUERY METHODS ==========
@@ -282,7 +225,8 @@ export class SchemaRegistry {
 		if (lowerName.includes("param")) {
 			return "param";
 		}
-		if (lowerName.includes("entity") || !lowerName.includes("schema")) {
+		// Entity schemas are explicitly named with "entity" in the name
+		if (lowerName.includes("entity")) {
 			return "entity";
 		}
 

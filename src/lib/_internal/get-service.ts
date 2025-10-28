@@ -38,6 +38,28 @@ function getCallingModule(): string | undefined {
 }
 
 /**
+ * Allowlisted entry points that are permitted to access services
+ * These are legitimate system files that need cross-module access
+ */
+const ALLOWED_ENTRY_POINTS = new Set([
+	"middleware",
+	"_init",
+	"_init-routes",
+	"context.middleware",
+	"app.middleware",
+]);
+
+/**
+ * Checks if the calling location is an allowed entry point
+ */
+function isAllowedEntryPoint(stack: string): boolean {
+	return (
+		ALLOWED_ENTRY_POINTS.has("") ||
+		Array.from(ALLOWED_ENTRY_POINTS).some((entry) => stack.includes(entry))
+	);
+}
+
+/**
  * Service access validation parameters
  */
 interface ServiceAccessParams {
@@ -69,8 +91,18 @@ function validateServiceAccess(params: ServiceAccessParams): void {
 		return;
 	}
 
-	// If calling module can't be determined, allow access (e.g., from middleware, init files)
+	// If calling module can't be determined, check if it's from an allowed entry point
 	if (!callingModule) {
+		const stack = new Error("Stack trace for auditing").stack || "";
+		if (isAllowedEntryPoint(stack)) {
+			return;
+		}
+		// Log the unknown calling module for auditing
+		// biome-ignore lint/suspicious/noConsole: Audit logging for security monitoring
+		console.warn(
+			`[Service Access] Unknown calling module attempting to access "${serviceName}" from "${serviceModule}". ` +
+				`Stack trace: ${stack.split("\n").slice(0, 5).join("\n")}`
+		);
 		return;
 	}
 

@@ -1,5 +1,5 @@
 import { env } from "@/config/env.config";
-import { getService } from "@/lib/get-service";
+import { getService } from "@/lib/_internal/get-service";
 import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
 import routes from "@/modules/app";
