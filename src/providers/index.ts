@@ -1,3 +1,6 @@
 /**
- * Empty barrel file to make sure git takes this folder
+ * Providers barrel file
+ * Add provider exports here as they are created
  */
+
+export {};

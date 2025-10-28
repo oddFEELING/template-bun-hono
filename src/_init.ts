@@ -1,23 +1,19 @@
 /**
  * Service Auto-Discovery
- * This file automatically discovers and imports all service files in the project.
- * It uses Bun's built-in glob to find all *.service.ts files and imports them,
- * which triggers the @Service decorator to register them in the ServiceRegistry.
+ * This file automatically discovers and registers:
+ * 1. All service files (*.service.ts) - triggers @Service decorator
+ *
+ * Note: Schema registration now happens in src/modules/app/index.ts
+ * on the actual app instance to ensure they appear in OpenAPI docs.
  */
 
-// Get all service files using Bun's glob
-const glob = new Bun.Glob("**/*.service.ts");
-
-// Scan for service files starting from the src directory
-const serviceFiles = glob.scanSync({
-  cwd: import.meta.dir,
-  absolute: true,
+// Import all service files to trigger @Service decorator
+const serviceGlob = new Bun.Glob("**/*.service.ts");
+const serviceFiles = serviceGlob.scanSync({
+	cwd: import.meta.dir,
+	absolute: true,
 });
 
-// Import each service file to trigger the @Service decorator
 for (const file of serviceFiles) {
-  await import(file);
+	await import(file);
 }
-
-// Export to make this file a module and allow top-level await
-export {};

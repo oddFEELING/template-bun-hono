@@ -6,71 +6,50 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The OpenAPI template content
  */
 export function generateOpenApiTemplate(moduleName) {
-  const className = toPascalCase(moduleName);
-  const varName = toCamelCase(moduleName);
-  return `import { createRoute, z } from "@hono/zod-openapi";
+	const className = toPascalCase(moduleName);
+	const varName = toCamelCase(moduleName);
+	return `import { createRoute } from "@hono/zod-openapi";
+import { idParamDto } from "@/modules/app/interfaces/app.dto";
 import {
-  idParamSchema,
-  create${className}Schema,
-  update${className}Schema,
-  query${className}Schema,
-  ${varName}EntitySchema,
-  ${varName}ResponseSchema,
-} from "../interfaces/${moduleName}.dto";
+  create${className}RequestDto,
+  create${className}ResponseDto,
+} from "../interfaces/create${className}.dto";
 import {
-  validationErrorSchema,
-  notFoundErrorSchema,
+  update${className}RequestDto,
+  update${className}ResponseDto,
+} from "../interfaces/update${className}.dto";
+import { get${className}ResponseDto } from "../interfaces/get${className}.dto";
+import {
+  list${className}sQueryDto,
+  list${className}sResponseDto,
+} from "../interfaces/list${className}s.dto";
+import { delete${className}ResponseDto } from "../interfaces/delete${className}.dto";
+import {
+  validationErrorDto,
+  notFoundErrorDto,
 } from "@/lib/error-schemas";
-import {
-  createListSchema,
-  createSingleSchema,
-} from "@/lib/response-schemas";
 
 /**
  * OpenAPI route definitions for ${moduleName}
  */
 
-// ~ ======= Response Schemas ======= ~
-const successListResponse = createListSchema(${varName}ResponseSchema);
-const successSingleResponse = createSingleSchema(${varName}ResponseSchema);
-
-// ~ ======= Get All ${className}s Route ======= ~
+// ~ ======= List All ${className}s Route (with pagination) ======= ~
 const getAll = createRoute({
   method: "get",
   path: "/",
-  operationId: "getAll${className}",
+  operationId: "list${className}s",
   tags: ["${className}"],
-  summary: "Get all ${moduleName}",
-  description: "Retrieves all ${moduleName} records from the database",
-  responses: {
-    200: {
-      description: "Successfully retrieved all ${moduleName}",
-      content: {
-        "application/json": {
-          schema: successListResponse,
-        },
-      },
-    },
-  },
-});
-
-// ~ ======= Get All ${className}s Paginated Route ======= ~
-const getAllPaginated = createRoute({
-  method: "get",
-  path: "/paginated",
-  operationId: "getAll${className}Paginated",
-  tags: ["${className}"],
-  summary: "Get paginated ${moduleName}",
+  summary: "List all ${moduleName}s",
   description: "Retrieves paginated ${moduleName} records from the database",
   request: {
-    query: query${className}Schema,
+    query: list${className}sQueryDto,
   },
   responses: {
     200: {
-      description: "Successfully retrieved paginated ${moduleName}",
+      description: "Successfully retrieved paginated ${moduleName}s",
       content: {
         "application/json": {
-          schema: successListResponse,
+          schema: list${className}sResponseDto,
         },
       },
     },
@@ -86,14 +65,14 @@ const getById = createRoute({
   summary: "Get ${moduleName} by ID",
   description: "Retrieves a single ${moduleName} record by its UUID",
   request: {
-    params: idParamSchema,
+    params: idParamDto,
   },
   responses: {
     200: {
       description: "Successfully retrieved ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: get${className}ResponseDto,
         },
       },
     },
@@ -101,7 +80,7 @@ const getById = createRoute({
       description: "${className} not found",
       content: {
         "application/json": {
-          schema: notFoundErrorSchema,
+          schema: notFoundErrorDto,
         },
       },
     },
@@ -120,7 +99,7 @@ const create = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: create${className}Schema,
+          schema: create${className}RequestDto,
         },
       },
     },
@@ -130,7 +109,7 @@ const create = createRoute({
       description: "Successfully created ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: create${className}ResponseDto,
         },
       },
     },
@@ -138,7 +117,7 @@ const create = createRoute({
       description: "Validation error",
       content: {
         "application/json": {
-          schema: validationErrorSchema,
+          schema: validationErrorDto,
         },
       },
     },
@@ -154,11 +133,11 @@ const update = createRoute({
   summary: "Update ${moduleName}",
   description: "Updates an existing ${moduleName} record in the database",
   request: {
-    params: idParamSchema,
+    params: idParamDto,
     body: {
       content: {
         "application/json": {
-          schema: update${className}Schema,
+          schema: update${className}RequestDto,
         },
       },
     },
@@ -168,7 +147,7 @@ const update = createRoute({
       description: "Successfully updated ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: update${className}ResponseDto,
         },
       },
     },
@@ -176,7 +155,7 @@ const update = createRoute({
       description: "${className} not found",
       content: {
         "application/json": {
-          schema: notFoundErrorSchema,
+          schema: notFoundErrorDto,
         },
       },
     },
@@ -184,7 +163,7 @@ const update = createRoute({
       description: "Validation error",
       content: {
         "application/json": {
-          schema: validationErrorSchema,
+          schema: validationErrorDto,
         },
       },
     },
@@ -200,14 +179,14 @@ const deleteRoute = createRoute({
   summary: "Delete ${moduleName}",
   description: "Deletes a ${moduleName} record from the database",
   request: {
-    params: idParamSchema,
+    params: idParamDto,
   },
   responses: {
     200: {
       description: "Successfully deleted ${moduleName}",
       content: {
         "application/json": {
-          schema: successSingleResponse,
+          schema: delete${className}ResponseDto,
         },
       },
     },
@@ -215,7 +194,7 @@ const deleteRoute = createRoute({
       description: "${className} not found",
       content: {
         "application/json": {
-          schema: notFoundErrorSchema,
+          schema: notFoundErrorDto,
         },
       },
     },
@@ -225,7 +204,6 @@ const deleteRoute = createRoute({
 // ~ ======= Export all routes ======= ~
 export const ${varName}Routes = {
   getAll,
-  getAllPaginated,
   getById,
   create,
   update,

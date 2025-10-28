@@ -11,15 +11,15 @@ const glob = new Bun.Glob("**/modules/*/routes/index.ts");
 // Scan for route files starting from the src directory
 // Filter out the app module (it's the main router, not a module route)
 const routeFiles = Array.from(
-  glob.scanSync({
-    cwd: import.meta.dir,
-    absolute: true,
-  })
+	glob.scanSync({
+		cwd: import.meta.dir,
+		absolute: true,
+	})
 ).filter((file) => !file.includes("/modules/app/"));
 
 // Import each route file to trigger route registration
 for (const file of routeFiles) {
-  await import(file);
+	await import(file);
 }
 
 // Export to make this file a module and allow top-level await

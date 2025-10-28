@@ -1,151 +1,98 @@
 # Service Visibility
 
-## Overview
+Control which modules can access your services.
 
-Services in Naalya API use a NestJS-inspired visibility system to enforce module boundaries and prevent unwanted cross-module dependencies.
+## Three Levels
 
-## Rules
-
-### **Private Services (Default)**
-Services are **private by default** and can only be used within their own module.
-
+### Private (Default)
 ```typescript
 @Service()
 export class UsersService {
-  // Only accessible within the users module
+  // Only accessible within users module
 }
 ```
 
-### **Public Services**
-Services marked as public can be used by any module.
-
+### Public
 ```typescript
 @Service({ visibility: "public" })
-export class EmailProvider {
-  // Accessible from any module
+export class StripeProvider {
+  // Accessible everywhere
 }
 ```
 
-## Usage Examples
-
-### ✅ **Correct Usage**
-
-**Within the same module:**
+### Granular
 ```typescript
-// src/modules/users/routes/index.ts
-import { UsersService } from "../users.service";
-
-const services = getServices({
-  usersService: UsersService, // ✅ Works - same module
-});
-```
-
-**Using public services:**
-```typescript
-// src/modules/orders/orders.service.ts
-import { EmailProvider } from "@/providers/email";
-
-@Service()
-export class OrdersService {
-  constructor(
-    private readonly emailProvider: EmailProvider // ✅ Works - public provider
-  ) {}
+@Service({ exposeTo: ["orders", "payments"] })
+export class UsersService {
+  // Only accessible by orders and payments modules
 }
 ```
 
-### ❌ **Incorrect Usage**
+## Rules
 
-**Accessing private service from another module:**
+**Same Module** - Always allowed
 ```typescript
-// src/modules/orders/orders.service.ts
-import { UsersService } from "@/modules/users/users.service";
-
-@Service()
-export class OrdersService {
-  constructor(
-    private readonly usersService: UsersService // ❌ Error!
-  ) {}
-}
-
-// Error: Access denied: UsersService is private to the "users" module 
-// and cannot be used in "orders".
+// users/routes/index.ts can use users/users.service.ts ✅
 ```
 
-## When to Use Public
+**Public Services** - Always allowed
+```typescript
+// Any module can use AppLogger ✅
+```
 
-Mark a service as public when:
+**Private Services** - Blocked across modules
+```typescript
+// orders/orders.service.ts CANNOT use users/users.service.ts ❌
+```
 
-1. **Providers** - 3rd party integrations (Stripe, Email, Storage)
-2. **Shared Utilities** - Core services like AppLogger
-3. **Cross-Module APIs** - When a module needs to expose functionality to others
+**Granular Access** - Only listed modules
+```typescript
+@Service({ exposeTo: ["orders"] })
+// orders module can use ✅
+// payments module cannot use ❌
+```
 
-## When to Keep Private
+## Provider Access
 
-Keep services private when:
+Providers use `provider:` prefix:
 
-1. **Business Logic** - Module-specific CRUD operations
-2. **Internal Helpers** - Utilities used only within the module
-3. **Database Operations** - Direct database access should stay in the module
+```typescript
+@Service({ exposeTo: ["provider:stripe", "provider:email"] })
+export class PaymentsService {
+  // Accessible by stripe and email providers
+}
+```
 
-## Architecture Benefits
+## When to Use What
 
-1. ✅ **Enforced Boundaries** - Prevents tight coupling between modules
-2. ✅ **Clear APIs** - Public services define the module's contract
-3. ✅ **Easy Refactoring** - Private services can be changed without affecting others
-4. ✅ **Better Testing** - Mock only public dependencies
-5. ✅ **Similar to NestJS** - Familiar pattern for developers
+**Private** - Default for modules, keeps logic isolated  
+**Public** - Providers, shared utilities, core services  
+**Granular** - Specific cross-module needs, better than public  
+
+## Tooler Defaults
+
+```bash
+bun tooler create module users        # Private
+bun tooler create module users --public  # Public
+bun tooler create provider stripe     # Public
+bun tooler create provider cache --private  # Private
+```
+
+## Errors
+
+```
+Access denied: OrdersService cannot inject UsersService 
+which is private to the "users" module.
+
+Fix:
+1. @Service({ visibility: 'public' })
+2. @Service({ exposeTo: ['orders'] })
+3. Remove the dependency
+```
 
 ## Best Practices
 
-### **Module Structure**
-```
-src/modules/users/
-  ├── users.service.ts          # @Service() - Private
-  ├── users.facade.ts           # @Service({ visibility: 'public' }) - If needed
-  └── routes/                   # Uses UsersService directly
-```
-
-### **Provider Structure**
-```
-src/providers/stripe/
-  └── stripe.service.ts         # @Service({ visibility: 'public' }) - Always public
-```
-
-### **Tip: Use Facades for Complex Modules**
-
-If a module needs to expose functionality to others, create a facade:
-
-```typescript
-// users/users.facade.ts
-@Service({ visibility: "public" })
-export class UsersFacade {
-  constructor(private readonly usersService: UsersService) {}
-
-  async validateUser(id: string) {
-    const user = await this.usersService.getById(id);
-    return user !== null;
-  }
-  
-  // Don't expose CRUD operations - keep them internal
-}
-```
-
-## Error Messages
-
-When you try to access a private service from another module:
-
-```
-Access denied: UsersService is private to the "users" module 
-and cannot be used in "orders". 
-
-To use this service across modules, mark it as 
-@Service({ visibility: 'public' }).
-```
-
-## Summary
-
-- **Default** = Private (module-scoped)
-- **Providers** = Public (cross-module)
-- **Business Logic** = Keep private
-- **Routes** = Always within their module, access everything
-
+- Start private, expose only when needed
+- Use `exposeTo` over `public` for better control
+- Document why services are exposed
+- Keep business logic private

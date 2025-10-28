@@ -6,9 +6,9 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The schema template content
  */
 export function generateSchemaTemplate(moduleName) {
-  const tableVarName = toCamelCase(moduleName); // productV2 (valid identifier)
-  const tableName = moduleName; // product-v2 (database table name)
-  return `import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+	const tableVarName = toCamelCase(moduleName); // productV2 (valid identifier)
+	const tableName = moduleName; // product-v2 (database table name)
+	return `import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * ${tableName} table schema

@@ -1,4 +1,5 @@
-import { getService } from "@/lib/get-service";
+import { env } from "@/config/env.config";
+import { getService } from "@/lib/_internal/get-service";
 import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
 import routes from "@/modules/app";
@@ -14,19 +15,23 @@ import { addContextVariables } from "./context.middleware";
 const logger = getService(AppLogger);
 
 export const addAppMiddleware = (app: OpenAPIHono<AppEnv>) => {
-  // Add context variables (logger, requestId)
-  app.use(addContextVariables);
+	// Add context variables (logger, requestId)
+	app.use(addContextVariables);
 
-  // Inject session into all routes
-  app.use(injectSession);
+	// Inject session into all routes
+	app.use(injectSession);
 
-  // Global middleware
-  app.use(cors());
-  app.use(prettyJSON());
-  app.use(secureHeaders());
-  app.use(timeout(10000));
-  app.use(honoLogger(logger.info.bind(logger)));
+	// Global middleware with configurable CORS origins from environment
+	app.use(
+		cors({
+			origin: env.CORS_ALLOWED_ORIGINS,
+		})
+	);
+	app.use(prettyJSON());
+	app.use(secureHeaders());
+	app.use(timeout(10_000));
+	app.use(honoLogger(logger.info.bind(logger)));
 
-  // Mount the app router (which includes docs + all API routes)
-  app.route("/", routes);
+	// Mount the app router (which includes docs + all API routes)
+	app.route("/", routes);
 };

@@ -5,14 +5,14 @@ import { type ZodError } from "zod";
  * Matches the standard API response schema
  */
 export interface ValidationErrorResponse {
-  success: false;
-  data: null;
-  status: 422;
-  error: {
-    type: "validation_error";
-    message: string;
-    fields: Record<string, string[]>;
-  };
+	success: false;
+	data: null;
+	status: 422;
+	error: {
+		type: "validation_error";
+		message: string;
+		fields: Record<string, string[]>;
+	};
 }
 
 /**
@@ -40,27 +40,27 @@ export interface ValidationErrorResponse {
  * }
  */
 export function formatValidationError(
-  zodError: ZodError
+	zodError: ZodError
 ): ValidationErrorResponse {
-  const fields: Record<string, string[]> = {};
+	const fields: Record<string, string[]> = {};
 
-  // Convert Zod issues to field-based format
-  zodError.issues.forEach((issue) => {
-    const path = issue.path.join(".") || "general";
-    if (!fields[path]) {
-      fields[path] = [];
-    }
-    fields[path].push(issue.message);
-  });
+	// Convert Zod issues to field-based format
+	zodError.issues.forEach((issue) => {
+		const path = issue.path.join(".") || "general";
+		if (!fields[path]) {
+			fields[path] = [];
+		}
+		fields[path].push(issue.message);
+	});
 
-  return {
-    success: false as const,
-    data: null,
-    status: 422,
-    error: {
-      type: "validation_error" as const,
-      message: "Validation failed",
-      fields,
-    },
-  };
+	return {
+		success: false as const,
+		data: null,
+		status: 422,
+		error: {
+			type: "validation_error" as const,
+			message: "Validation failed",
+			fields,
+		},
+	};
 }

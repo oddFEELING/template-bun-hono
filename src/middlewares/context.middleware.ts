@@ -1,4 +1,4 @@
-import { getServices } from "@/lib/get-service";
+import { getServices } from "@/lib/_internal/get-service";
 import { AppLogger } from "@/lib/logger";
 import type { AppEnv } from "@/lib/types";
 import { createMiddleware } from "hono/factory";
@@ -8,10 +8,10 @@ import { createMiddleware } from "hono/factory";
  * Adds commonly used utilities to the Hono context for easier access in route handlers
  */
 export const addContextVariables = createMiddleware<AppEnv>(async (c, next) => {
-  const { appLogger } = getServices({ appLogger: AppLogger });
+	const { appLogger } = getServices({ appLogger: AppLogger });
 
-  c.set("logger", appLogger);
-  c.set("requestId", crypto.randomUUID());
+	c.set("logger", appLogger);
+	c.set("requestId", crypto.randomUUID());
 
-  await next();
+	await next();
 });

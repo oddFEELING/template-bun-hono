@@ -16,14 +16,23 @@ export type ServiceVisibility = "public" | "private";
  * Service metadata stored in the registry
  */
 export interface ServiceMetadata {
-  instance: any;
-  visibility: ServiceVisibility;
-  module?: string;
-  name: string;
-  exposeTo?: string[];
+	// biome-ignore lint/suspicious/noExplicitAny: Service instance type varies by implementation
+	instance: any;
+	visibility: ServiceVisibility;
+	module?: string;
+	name: string;
+	exposeTo?: string[];
 }
 
+/**
+ * Regex patterns for extracting module information from stack traces
+ * Defined at module level for better performance
+ */
+const MODULE_PATH_PATTERN = /\/modules\/([^/]+)\//;
+const PROVIDER_PATH_PATTERN = /\/providers\/([^/]+)\//;
+
 // ~ ======= Create registry ======= ~
+// biome-ignore lint/complexity/noBannedTypes: Function type needed for service constructor registry
 export const ServiceRegistry = new Map<Function, ServiceMetadata>();
 
 /**
@@ -31,22 +40,24 @@ export const ServiceRegistry = new Map<Function, ServiceMetadata>();
  * E.g., /path/to/src/modules/users/users.service.ts -> "users"
  */
 function getModuleFromStack(): string | undefined {
-  const stack = new Error().stack;
-  if (!stack) return undefined;
+	const stack = new Error("Stack trace for module detection").stack;
+	if (!stack) {
+		return;
+	}
 
-  // Look for module pattern in stack trace
-  const moduleMatch = stack.match(/\/modules\/([^\/]+)\//);
-  if (moduleMatch) {
-    return moduleMatch[1];
-  }
+	// Look for module pattern in stack trace
+	const moduleMatch = stack.match(MODULE_PATH_PATTERN);
+	if (moduleMatch) {
+		return moduleMatch[1];
+	}
 
-  // Look for provider pattern in stack trace
-  const providerMatch = stack.match(/\/providers\/([^\/]+)\//);
-  if (providerMatch) {
-    return `provider:${providerMatch[1]}`;
-  }
+	// Look for provider pattern in stack trace
+	const providerMatch = stack.match(PROVIDER_PATH_PATTERN);
+	if (providerMatch) {
+		return `provider:${providerMatch[1]}`;
+	}
 
-  return undefined;
+	return;
 }
 
 /**
@@ -56,25 +67,25 @@ function getModuleFromStack(): string | undefined {
  * Public services are accessible everywhere, making exposeTo redundant.
  */
 export interface ServiceOptions {
-  /**
-   * Visibility of the service
-   * - 'public': Can be used by any module
-   * - 'private': Only usable within its own module or modules specified in exposeTo (default)
-   *
-   * Cannot be used together with exposeTo.
-   */
-  visibility?: ServiceVisibility;
+	/**
+	 * Visibility of the service
+	 * - 'public': Can be used by any module
+	 * - 'private': Only usable within its own module or modules specified in exposeTo (default)
+	 *
+	 * Cannot be used together with exposeTo.
+	 */
+	visibility?: ServiceVisibility;
 
-  /**
-   * List of module names that can access this private service
-   * Only valid when visibility is 'private' (or omitted)
-   * Must be valid module identifiers (validated at runtime)
-   *
-   * Cannot be used together with visibility: 'public'.
-   *
-   * @example ['orders', 'payments', 'provider:stripe']
-   */
-  exposeTo?: ModuleIdentifier[];
+	/**
+	 * List of module names that can access this private service
+	 * Only valid when visibility is 'private' (or omitted)
+	 * Must be valid module identifiers (validated at runtime)
+	 *
+	 * Cannot be used together with visibility: 'public'.
+	 *
+	 * @example ['orders', 'payments', 'provider:stripe']
+	 */
+	exposeTo?: ModuleIdentifier[];
 }
 
 /**
@@ -106,206 +117,208 @@ export interface ServiceOptions {
  * export class PaymentsService { }
  */
 export function Service(options?: ServiceOptions) {
-  return function <T extends { new (...args: any[]): {} }>(
-    constructorObject: T
-  ) {
-    const visibility = options?.visibility || "private";
-    const exposeTo = options?.exposeTo;
-    const module = getModuleFromStack();
+	// biome-ignore lint/suspicious/noExplicitAny: Constructor signature requires flexible parameter types
+	// biome-ignore lint/complexity/noBannedTypes: Empty object type required for flexible constructor signature
+	return <T extends { new (...args: any[]): {} }>(constructorObject: T) => {
+		const visibility = options?.visibility || "private";
+		const exposeTo = options?.exposeTo;
+		const module = getModuleFromStack();
 
-    // ~ ======= Validate configuration conflicts ======= ~
-    if (visibility === "public" && exposeTo && exposeTo.length > 0) {
-      throw new Error(
-        `Invalid @Service configuration in ${constructorObject.name}:\n` +
-          `Cannot use 'exposeTo' when visibility is 'public'.\n\n` +
-          `Public services are accessible from all modules, making 'exposeTo' redundant.\n` +
-          `Either:\n` +
-          `  - Remove 'exposeTo' to keep it public\n` +
-          `  - Remove 'visibility: "public"' to use granular access control with 'exposeTo'`
-      );
-    }
+		// ~ ======= Validate configuration conflicts ======= ~
+		if (visibility === "public" && exposeTo && exposeTo.length > 0) {
+			throw new Error(
+				`Invalid @Service configuration in ${constructorObject.name}:\n` +
+					`Cannot use 'exposeTo' when visibility is 'public'.\n\n` +
+					`Public services are accessible from all modules, making 'exposeTo' redundant.\n` +
+					"Either:\n" +
+					`  - Remove 'exposeTo' to keep it public\n` +
+					`  - Remove 'visibility: "public"' to use granular access control with 'exposeTo'`
+			);
+		}
 
-    // ~ ======= Validate exposeTo field ======= ~
-    if (exposeTo && exposeTo.length > 0) {
-      validateExposeToField(constructorObject.name, exposeTo);
-    }
+		// ~ ======= Validate exposeTo field ======= ~
+		if (exposeTo && exposeTo.length > 0) {
+			validateExposeToField(constructorObject.name, exposeTo);
+		}
 
-    // ~ ======= Register into dependency injector container ======= ~
-    injectable()(constructorObject);
-    singleton()(constructorObject);
+		// ~ ======= Register into dependency injector container ======= ~
+		injectable()(constructorObject);
+		singleton()(constructorObject);
 
-    // ~ ======= Validate constructor dependencies BEFORE resolution ======= ~
-    // Get constructor parameters and validate their visibility
-    validateConstructorDependencies(constructorObject, module, exposeTo);
+		// ~ ======= Validate constructor dependencies BEFORE resolution ======= ~
+		// Get constructor parameters and validate their visibility
+		validateConstructorDependencies(constructorObject, module, exposeTo);
 
-    // ~ ======= Resolve the instance ======= ~
-    const instance = container.resolve(constructorObject);
+		// ~ ======= Resolve the instance ======= ~
+		const instance = container.resolve(constructorObject);
 
-    // ~ ======= Store instance with metadata in the registry ======= ~
-    ServiceRegistry.set(constructorObject, {
-      instance,
-      visibility,
-      module,
-      name: constructorObject.name,
-      exposeTo,
-    });
-  };
+		// ~ ======= Store instance with metadata in the registry ======= ~
+		ServiceRegistry.set(constructorObject, {
+			instance,
+			visibility,
+			module,
+			name: constructorObject.name,
+			exposeTo,
+		});
+	};
 }
 
 /**
  * Validates the exposeTo field against available modules
  */
 function validateExposeToField(serviceName: string, exposeTo: string[]): void {
-  try {
-    // Dynamically import the generated module list
-    const { validateModules } = require("../_generated/modules");
-    const invalidModules = validateModules(exposeTo);
+	try {
+		// Dynamically import the generated module list
+		const { validateModules } = require("../_generated/modules");
+		const invalidModules = validateModules(exposeTo);
 
-    if (invalidModules.length > 0) {
-      throw new Error(
-        `Invalid exposeTo configuration in ${serviceName}:\n` +
-          `  Invalid modules: [${invalidModules.join(", ")}]\n\n` +
-          `Run 'bun run generate:modules' to see available modules.\n` +
-          `Available modules are listed in src/_generated/modules.ts`
-      );
-    }
-  } catch (error) {
-    if ((error as any).code === "MODULE_NOT_FOUND") {
-      console.warn(
-        `⚠️  Warning: Module list not generated. Run 'bun run generate:modules' to generate it.`
-      );
-    } else {
-      throw error;
-    }
-  }
+		if (invalidModules.length > 0) {
+			throw new Error(
+				`Invalid exposeTo configuration in ${serviceName}:\n` +
+					`  Invalid modules: [${invalidModules.join(", ")}]\n\n` +
+					`Run 'bun run generate:modules' to see available modules.\n` +
+					"Available modules are listed in src/_generated/modules.ts"
+			);
+		}
+	} catch (error) {
+		// biome-ignore lint/suspicious/noExplicitAny: Error object code property is not typed
+		if ((error as any).code === "MODULE_NOT_FOUND") {
+			// Module file doesn't exist yet, silently continue
+		} else {
+			throw error;
+		}
+	}
 }
 
 /**
  * Validates that all constructor dependencies respect visibility rules
  */
 function validateConstructorDependencies(
-  constructorObject: any,
-  callingModule: string | undefined,
-  callingExposeTo?: string[]
+	// biome-ignore lint/suspicious/noExplicitAny: Constructor parameter needs flexible typing for dependency validation
+	constructorObject: any,
+	callingModule: string | undefined,
+	_callingExposeTo?: string[]
 ): void {
-  // Get constructor parameter types from reflect metadata
-  const paramTypes =
-    Reflect.getMetadata("design:paramtypes", constructorObject) || [];
+	// Get constructor parameter types from reflect metadata
+	const paramTypes =
+		Reflect.getMetadata("design:paramtypes", constructorObject) || [];
 
-  for (const paramType of paramTypes) {
-    // Skip if not a registered service
-    if (!ServiceRegistry.has(paramType)) {
-      continue;
-    }
+	for (const paramType of paramTypes) {
+		// Skip if not a registered service
+		if (!ServiceRegistry.has(paramType)) {
+			continue;
+		}
 
-    const metadata = ServiceRegistry.get(paramType);
-    if (!metadata) {
-      continue;
-    }
+		const metadata = ServiceRegistry.get(paramType);
+		if (!metadata) {
+			continue;
+		}
 
-    // Validate access using granular permissions
-    const hasAccess = canAccessService(
-      constructorObject.name,
-      callingModule,
-      metadata.name,
-      metadata.visibility,
-      metadata.module,
-      metadata.exposeTo
-    );
+		// Validate access using granular permissions
+		const hasAccess = canAccessService(
+			constructorObject.name,
+			callingModule,
+			metadata.name,
+			metadata.visibility,
+			metadata.module,
+			metadata.exposeTo
+		);
 
-    if (!hasAccess) {
-      const errorMessage = buildAccessDeniedMessage(
-        constructorObject.name,
-        callingModule,
-        metadata.name,
-        metadata.module,
-        metadata.exposeTo
-      );
-      throw new Error(errorMessage);
-    }
-  }
+		if (!hasAccess) {
+			const errorMessage = buildAccessDeniedMessage(
+				constructorObject.name,
+				callingModule,
+				metadata.name,
+				metadata.module,
+				metadata.exposeTo
+			);
+			throw new Error(errorMessage);
+		}
+	}
 }
 
 /**
  * Checks if a service can access another service based on visibility rules
  */
+// biome-ignore lint/nursery/useMaxParams: Function requires multiple parameters for comprehensive access validation
 function canAccessService(
-  consumerName: string,
-  consumerModule: string | undefined,
-  serviceName: string,
-  serviceVisibility: ServiceVisibility,
-  serviceModule: string | undefined,
-  serviceExposeTo?: string[]
+	_consumerName: string,
+	consumerModule: string | undefined,
+	_serviceName: string,
+	serviceVisibility: ServiceVisibility,
+	serviceModule: string | undefined,
+	serviceExposeTo?: string[]
 ): boolean {
-  // Public services are always accessible
-  if (serviceVisibility === "public") {
-    return true;
-  }
+	// Public services are always accessible
+	if (serviceVisibility === "public") {
+		return true;
+	}
 
-  // Services without module info are considered global
-  if (!serviceModule) {
-    return true;
-  }
+	// Services without module info are considered global
+	if (!serviceModule) {
+		return true;
+	}
 
-  // If consumer module can't be determined, allow (e.g., from middleware, init files)
-  if (!consumerModule) {
-    return true;
-  }
+	// If consumer module can't be determined, allow (e.g., from middleware, init files)
+	if (!consumerModule) {
+		return true;
+	}
 
-  // Same module always has access
-  if (serviceModule === consumerModule) {
-    return true;
-  }
+	// Same module always has access
+	if (serviceModule === consumerModule) {
+		return true;
+	}
 
-  // Check if consumer is in the exposeTo list
-  if (serviceExposeTo && serviceExposeTo.includes(consumerModule)) {
-    return true;
-  }
+	// Check if consumer is in the exposeTo list
+	if (serviceExposeTo?.includes(consumerModule)) {
+		return true;
+	}
 
-  // Access denied
-  return false;
+	// Access denied
+	return false;
 }
 
 /**
  * Builds a detailed error message for access denial
  */
+// biome-ignore lint/nursery/useMaxParams: Function requires multiple parameters for comprehensive error messaging
 function buildAccessDeniedMessage(
-  consumerName: string,
-  consumerModule: string | undefined,
-  serviceName: string,
-  serviceModule: string | undefined,
-  serviceExposeTo?: string[]
+	consumerName: string,
+	consumerModule: string | undefined,
+	serviceName: string,
+	serviceModule: string | undefined,
+	serviceExposeTo?: string[]
 ): string {
-  let message = `Access denied: ${consumerName}`;
+	let message = `Access denied: ${consumerName}`;
 
-  if (consumerModule) {
-    message += ` in "${consumerModule}" module`;
-  }
+	if (consumerModule) {
+		message += ` in "${consumerModule}" module`;
+	}
 
-  message += ` cannot inject ${serviceName}`;
+	message += ` cannot inject ${serviceName}`;
 
-  if (serviceModule) {
-    message += ` which is private to the "${serviceModule}" module`;
-  }
+	if (serviceModule) {
+		message += ` which is private to the "${serviceModule}" module`;
+	}
 
-  message += ".";
+	message += ".";
 
-  if (serviceExposeTo && serviceExposeTo.length > 0) {
-    message += ` This service is only exposed to: [${serviceExposeTo.join(
-      ", "
-    )}].`;
-  }
+	if (serviceExposeTo && serviceExposeTo.length > 0) {
+		message += ` This service is only exposed to: [${serviceExposeTo.join(
+			", "
+		)}].`;
+	}
 
-  message += "\n\nTo fix this, you can:";
-  message +=
-    "\n1. Mark the service as public: @Service({ visibility: 'public' })";
+	message += "\n\nTo fix this, you can:";
+	message +=
+		"\n1. Mark the service as public: @Service({ visibility: 'public' })";
 
-  if (consumerModule) {
-    message += `\n2. Add '${consumerModule}' to exposeTo: @Service({ exposeTo: ['${consumerModule}'] })`;
-  }
+	if (consumerModule) {
+		message += `\n2. Add '${consumerModule}' to exposeTo: @Service({ exposeTo: ['${consumerModule}'] })`;
+	}
 
-  message +=
-    "\n3. Remove the cross-module dependency (recommended for clean architecture)";
+	message +=
+		"\n3. Remove the cross-module dependency (recommended for clean architecture)";
 
-  return message;
+	return message;
 }

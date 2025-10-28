@@ -6,9 +6,9 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The DTO template content
  */
 export function generateProviderDtoTemplate(providerName) {
-  const className = toPascalCase(providerName);
-  const varName = toCamelCase(providerName);
-  return `import { z } from "@hono/zod-openapi";
+	const className = toPascalCase(providerName);
+	const varName = toCamelCase(providerName);
+	return `import { z } from "@hono/zod-openapi";
 
 /**
  * ${className} Provider DTO schemas and types
@@ -50,22 +50,13 @@ const ${varName}ResponseSchema = z
   })
   .openapi("${className}Response");
 
-// ~ ======= TypeScript Types ======= ~
-type ${varName}Config = z.infer<typeof ${varName}ConfigSchema>;
-type ${varName}Request = z.infer<typeof ${varName}RequestSchema>;
-type ${varName}Response = z.infer<typeof ${varName}ResponseSchema>;
-
 // ~ ======= Exports ======= ~
+// Schemas are exported for auto-discovery and registered in SchemaRegistry
+// Access types via: SchemaRegistryType<"schemaName">
 export {
   ${varName}ConfigSchema,
-    ${varName}RequestSchema,
+  ${varName}RequestSchema,
   ${varName}ResponseSchema,
-};
-
-export type {
-  ${varName}Config,
-  ${varName}Request,
-  ${varName}Response,
 };
 `;
 }

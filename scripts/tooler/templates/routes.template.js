@@ -7,12 +7,12 @@ import { toCamelCase, toPascalCase } from "../utils/string.js";
  * @returns {string} The routes index template content
  */
 export function generateRoutesIndexTemplate(moduleName, version = "v1") {
-  const className = toPascalCase(moduleName);
-  const varName = toCamelCase(moduleName);
-  return `import { OpenAPIHono } from "@hono/zod-openapi";
-import { getServices } from "@/lib/get-service";
-import { registerRoute } from "@/lib/route-registry";
-import type { RouteConfig } from "@/lib/route-registry";
+	const className = toPascalCase(moduleName);
+	const varName = toCamelCase(moduleName);
+	return `import { OpenAPIHono } from "@hono/zod-openapi";
+import { getServices } from "@/lib/_internal/get-service";
+import { registerRoute } from "@/lib/_internal/route-registry";
+import type { RouteConfig } from "@/lib/_internal/route-registry";
 import type { AppEnv } from "@/lib/types";
 import {
   successResponse,
@@ -30,14 +30,8 @@ const services = getServices({
 // ~ ======= Initialize router ======= ~
 const ${varName}Router = new OpenAPIHono<AppEnv>();
 
-// ~ ======= Get All ${className}s ======= ~
+// ~ ======= List All ${className}s (with pagination) ======= ~
 ${varName}Router.openapi(${varName}Routes.getAll, async (c) => {
-  const data = await services.${varName}Service.getAll();
-  return successResponse(c, data);
-});
-
-// ~ ======= Get All ${className}s Paginated ======= ~
-${varName}Router.openapi(${varName}Routes.getAllPaginated, async (c) => {
   const query = c.req.valid("query");
   const data = await services.${varName}Service.getAllPaginated(query);
   return successResponse(c, data);
@@ -78,13 +72,16 @@ ${varName}Router.openapi(${varName}Routes.update, async (c) => {
 // ~ ======= Delete ${className} ======= ~
 ${varName}Router.openapi(${varName}Routes.delete, async (c) => {
   const { id } = c.req.valid("param");
-  const data = await services.${varName}Service.delete(id);
+  const deleted = await services.${varName}Service.delete(id);
   
-  if (!data) {
+  if (!deleted) {
     return notFoundResponse(c, "${className} not found");
   }
   
-  return successResponse(c, data);
+  return successResponse(c, {
+    success: true,
+    message: "${className} deleted successfully",
+  });
 });
 
 // ~ ======= Route Configuration ======= ~

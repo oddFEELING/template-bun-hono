@@ -1,4 +1,4 @@
-import { toPascalCase, toCamelCase } from "../utils/string.js";
+import { toCamelCase, toPascalCase } from "../utils/string.js";
 
 /**
  * Generates the service template file content
@@ -7,23 +7,23 @@ import { toPascalCase, toCamelCase } from "../utils/string.js";
  * @returns {string} The service template content
  */
 export function generateServiceTemplate(moduleName, visibility = "private") {
-  const className = toPascalCase(moduleName);
-  const tableVarName = toCamelCase(moduleName);
-  const decorator =
-    visibility === "public"
-      ? `@Service({ visibility: "public" })`
-      : `@Service()`;
-  const visibilityComment =
-    visibility === "public"
-      ? "Public service - accessible from other modules"
-      : "Private service - only accessible within this module";
+	const className = toPascalCase(moduleName);
+	const tableVarName = toCamelCase(moduleName);
+	const decorator =
+		visibility === "public"
+			? `@Service({ visibility: "public" })`
+			: "@Service()";
+	const visibilityComment =
+		visibility === "public"
+			? "Public service - accessible from other modules"
+			: "Private service - only accessible within this module";
 
-  return `import { Service } from "@/decorators";
+	return `import { Service } from "@/decorators";
 import { AppLogger } from "@/lib/logger";
+import type { SchemaRegistryType } from "@/_generated/schemas";
 import db from "@/drizzle/db";
 import { ${tableVarName} } from "./entities/${moduleName}.schema";
-import type { Create${className}DTO, Update${className}DTO, Query${className}DTO } from "./interfaces/${moduleName}.dto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * ${className}Service
@@ -32,7 +32,10 @@ import { eq } from "drizzle-orm";
  */
 ${decorator}
 export class ${className}Service {
-  constructor(private readonly logger: AppLogger) {
+  private readonly logger: AppLogger;
+
+  constructor(logger: AppLogger) {
+    this.logger = logger;
     this.logger.info("${className}Service initialized");
   }
 
@@ -51,10 +54,15 @@ export class ${className}Service {
    * @param query - Pagination parameters (page, limit)
    * @returns Paginated array of ${moduleName} records
    */
-  async getAllPaginated(query: Query${className}DTO) {
+  async getAllPaginated(query: SchemaRegistryType<"list${className}sQueryDto">) {
     this.logger.info(\`Fetching paginated ${moduleName} - Page: \${query.page}, Limit: \${query.limit}\`);
-    const page = parseInt(query.page);
-    const limit = parseInt(query.limit);
+    
+    // Parse and validate pagination parameters with fallback defaults
+    const parsedPage = Number.parseInt(String(query.page), 10);
+    const parsedLimit = Number.parseInt(String(query.limit), 10);
+    
+    const page = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit));
     const offset = (page - 1) * limit;
 
     const results = await db
@@ -63,7 +71,29 @@ export class ${className}Service {
       .limit(limit)
       .offset(offset);
 
-    return results;
+    const countResult = await db
+      .select({ count: sql<number>\`count(*)\` })
+      .from(${tableVarName});
+    
+    // Convert count to number and handle potential string values from some DB drivers
+    const rawCount = countResult[0]?.count;
+    const count = typeof rawCount === 'number' ? rawCount : Number(rawCount) || 0;
+
+    const totalPages = Math.ceil(count / limit);
+
+    return {
+      data: results,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+      },
+    };
   }
 
   /**
@@ -87,7 +117,7 @@ export class ${className}Service {
    * @param data - The data for creating a new ${moduleName}
    * @returns The newly created ${moduleName} record
    */
-  async create(data: Create${className}DTO) {
+  async create(data: SchemaRegistryType<"create${className}RequestDto">) {
     this.logger.info(\`Creating new ${moduleName}: \${JSON.stringify(data)}\`);
     const result = await db
       .insert(${tableVarName})
@@ -103,7 +133,7 @@ export class ${className}Service {
    * @param data - The data to update
    * @returns The updated ${moduleName} record or null if not found
    */
-  async update(id: string, data: Update${className}DTO) {
+  async update(id: string, data: SchemaRegistryType<"update${className}RequestDto">) {
     this.logger.info(\`Updating ${moduleName} with ID: \${id}\`);
     const result = await db
       .update(${tableVarName})
