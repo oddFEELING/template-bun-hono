@@ -1,35 +1,24 @@
-import { toCamelCase, toPascalCase } from "../utils/string.js";
-
-/**
- * Generates the OpenAPI routes template for simple routes
- * @param {string} routeName - The name of the route
- * @returns {string} The OpenAPI template content
- */
-export function generateSimpleOpenApiTemplate(routeName) {
-	const className = toPascalCase(routeName);
-	const varName = toCamelCase(routeName);
-
-	return `import { createRoute } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import {
   messageRequestSchema,
   queryParamSchema,
   helloResponseSchema,
   echoResponseSchema,
   queryResponseSchema,
-} from "../interfaces/${routeName}.dto";
+} from "../interfaces/test-bullmq.dto";
 
 /**
- * OpenAPI route definitions for ${routeName}
+ * OpenAPI route definitions for test-bullmq
  */
 
 // ~ ======= GET / - Hello World Route ======= ~
 const hello = createRoute({
   method: "get",
   path: "/",
-  operationId: "get${className}Hello",
-  tags: ["${className}"],
+  operationId: "getTestBullmqHello",
+  tags: ["TestBullmq"],
   summary: "Get hello world message",
-  description: "Returns a simple hello world message from ${className}",
+  description: "Returns a simple hello world message from TestBullmq",
   responses: {
     200: {
       description: "Successfully retrieved hello message",
@@ -46,8 +35,8 @@ const hello = createRoute({
 const echo = createRoute({
   method: "post",
   path: "/",
-  operationId: "post${className}Echo",
-  tags: ["${className}"],
+  operationId: "postTestBullmqEcho",
+  tags: ["TestBullmq"],
   summary: "Echo message",
   description: "Accepts a message and returns it back",
   request: {
@@ -75,8 +64,8 @@ const echo = createRoute({
 const query = createRoute({
   method: "get",
   path: "/query",
-  operationId: "get${className}Query",
-  tags: ["${className}"],
+  operationId: "getTestBullmqQuery",
+  tags: ["TestBullmq"],
   summary: "Get personalized greeting",
   description: "Returns a greeting with the provided name from query parameter",
   request: {
@@ -95,10 +84,8 @@ const query = createRoute({
 });
 
 // ~ ======= Export all routes ======= ~
-export const ${varName}Routes = {
+export const testBullmqRoutes = {
   hello,
   echo,
   query,
 };
-`;
-}

@@ -9,6 +9,7 @@ export function generateDtoTemplate(moduleName) {
 	const className = toPascalCase(moduleName);
 	const varName = toCamelCase(moduleName);
 	return `import { z } from "@hono/zod-openapi";
+import { type ${className} } from "../entities/${moduleName}.schema";
 
 /**
  * ${className} base entity schema
@@ -26,16 +27,16 @@ const ${varName}EntityDto = z
       description: "Name of the ${moduleName}",
       example: "${className} name",
     }),
-    createdAt: z.iso.datetime().openapi({
+    createdAt: z.coerce.date().openapi({
       description: "Timestamp when the ${moduleName} was created",
       example: "2024-01-01T00:00:00.000Z",
     }),
-    updatedAt: z.iso.datetime().openapi({
+    updatedAt: z.coerce.date().openapi({
       description: "Timestamp when the ${moduleName} was last updated",
       example: "2024-01-01T00:00:00.000Z",
     }),
   })
-  .openapi("${className}");
+  .openapi("${className}") satisfies z.ZodType<${className}>;
 
 // ~ ======= Exports ======= ~
 // DTOs are exported for auto-discovery and registered in SchemaRegistry

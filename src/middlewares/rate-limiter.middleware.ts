@@ -39,10 +39,8 @@ interface RateLimitConfig {
 	message?: string;
 	/** Skip rate limiting based on condition */
 	skip?: (c: Context<AppEnv>) => boolean | Promise<boolean>;
-	/** Whether to use sliding window (default: true) */
+	/** Standard headers format to use (draft-6, draft-7, or false to disable) */
 	standardHeaders?: "draft-6" | "draft-7" | false;
-	/** Whether to send rate limit info in headers */
-	legacyHeaders?: boolean;
 }
 
 /**
@@ -76,7 +74,6 @@ const rateLimitMap: Record<string, RateLimitConfig> = {
 		},
 		message: "Too many login attempts. Please try again later.",
 		standardHeaders: "draft-7",
-		legacyHeaders: false,
 	},
 
 	// Example: Moderate rate limit for general API endpoints
@@ -89,7 +86,6 @@ const rateLimitMap: Record<string, RateLimitConfig> = {
 		},
 		message: "Rate limit exceeded. Please slow down your requests.",
 		standardHeaders: "draft-7",
-		legacyHeaders: false,
 	},
 
 	// Example: Higher limit for read-only operations
@@ -105,7 +101,6 @@ const rateLimitMap: Record<string, RateLimitConfig> = {
 			return false;
 		},
 		standardHeaders: "draft-7",
-		legacyHeaders: false,
 	},
 
 	// Example: Lower limit for write operations
@@ -117,7 +112,6 @@ const rateLimitMap: Record<string, RateLimitConfig> = {
 			useRoutePath: true,
 		},
 		standardHeaders: "draft-7",
-		legacyHeaders: false,
 	},
 
 	// Example: Custom key generator for specific use case
@@ -133,7 +127,6 @@ const rateLimitMap: Record<string, RateLimitConfig> = {
 			},
 		},
 		standardHeaders: "draft-7",
-		legacyHeaders: false,
 	},
 };
 
@@ -198,27 +191,40 @@ const createRateLimiter = (configKey: string): MiddlewareHandler<AppEnv> => {
 		throw new Error(`Rate limit configuration not found for key: ${configKey}`);
 	}
 
-	// Create Redis store for rate limiting
-	// Type assertions needed for compatibility between ioredis and hono-rate-limiter
-	const store = new RedisStore({
-		sendCommand: async (...args: string[]) => {
-			// biome-ignore lint/suspicious/noExplicitAny: ioredis types compatibility
-			const client = redisProvider.getClient() as any;
-			// biome-ignore lint/suspicious/noExplicitAny: call method types compatibility
-			return client.call(...(args as any));
+	// Create adapter for IORedis client to match RedisClient interface expected by RedisStore
+	const redisClient = redisProvider.getClient();
+	const clientAdapter = {
+		scriptLoad: async (script: string): Promise<string> => {
+			const result = await redisClient.script("LOAD", script);
+			return result as string;
 		},
+		evalsha: async <TArgs extends unknown[], TData = unknown>(
+			sha1: string,
+			keys: string[],
+			args: TArgs
+		): Promise<TData> => {
+			// IORedis evalsha expects: sha1, numKeys, key1, key2, ..., arg1, arg2, ...
+			const allArgs = [...keys, ...(args as string[])];
+			const result = await redisClient.evalsha(sha1, keys.length, ...allArgs);
+			return result as TData;
+		},
+		decr: async (key: string): Promise<number> => redisClient.decr(key),
+		del: async (key: string): Promise<number> => redisClient.del(key),
+	};
+
+	// Create Redis store for rate limiting
+	// Use type assertion to bypass incompatible generic type constraints
+	const store = new RedisStore({
+		client: clientAdapter,
 		prefix: `ratelimit:${configKey}:`,
-		// biome-ignore lint/suspicious/noExplicitAny: RedisStore options compatibility
-	} as any);
+	}) as unknown as Parameters<typeof rateLimiter>[0]["store"];
 
 	// Create and return the rate limiter middleware
 	return rateLimiter({
 		windowMs: config.windowMs,
 		limit: config.limit,
 		standardHeaders: config.standardHeaders ?? "draft-7",
-		legacyHeaders: config.legacyHeaders ?? false,
 		store,
-		// Custom key generator based on configuration
 		keyGenerator: async (c: Context<AppEnv>) => {
 			// Use custom extractor if provided
 			if (config.keyOptions.customExtractor) {
@@ -239,8 +245,7 @@ const createRateLimiter = (configKey: string): MiddlewareHandler<AppEnv> => {
 		},
 		// Skip rate limiting based on configuration
 		skip: config.skip,
-		// biome-ignore lint/suspicious/noExplicitAny: rateLimiter requires type casting for store and legacyHeaders options
-	} as any);
+	});
 };
 
 /**

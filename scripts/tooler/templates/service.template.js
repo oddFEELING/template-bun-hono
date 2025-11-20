@@ -22,8 +22,12 @@ export function generateServiceTemplate(moduleName, visibility = "private") {
 import { AppLogger } from "@/lib/logger";
 import type { SchemaRegistryType } from "@/_generated/schemas";
 import db from "@/drizzle/db";
+import {
+  createPaginatedResponse,
+  parsePaginationParams,
+} from "@/lib/pagination-helper";
 import { ${tableVarName} } from "./entities/${moduleName}.schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 /**
  * ${className}Service
@@ -55,15 +59,9 @@ export class ${className}Service {
    * @returns Paginated array of ${moduleName} records
    */
   async getAllPaginated(query: SchemaRegistryType<"list${className}sQueryDto">) {
-    this.logger.info(\`Fetching paginated ${moduleName} - Page: \${query.page}, Limit: \${query.limit}\`);
-    
-    // Parse and validate pagination parameters with fallback defaults
-    const parsedPage = Number.parseInt(String(query.page), 10);
-    const parsedLimit = Number.parseInt(String(query.limit), 10);
-    
-    const page = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
-    const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit));
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaginationParams(query);
+
+    this.logger.info(\`Fetching paginated ${moduleName} - Page: \${page}, Limit: \${limit}\`);
 
     const results = await db
       .select()
@@ -71,29 +69,9 @@ export class ${className}Service {
       .limit(limit)
       .offset(offset);
 
-    const countResult = await db
-      .select({ count: sql<number>\`count(*)\` })
-      .from(${tableVarName});
-    
-    // Convert count to number and handle potential string values from some DB drivers
-    const rawCount = countResult[0]?.count;
-    const count = typeof rawCount === 'number' ? rawCount : Number(rawCount) || 0;
+    const total = await db.$count(${tableVarName});
 
-    const totalPages = Math.ceil(count / limit);
-
-    return {
-      data: results,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1,
-        nextPage: page < totalPages ? page + 1 : null,
-        prevPage: page > 1 ? page - 1 : null,
-      },
-    };
+    return createPaginatedResponse(results, page, limit, total);
   }
 
   /**

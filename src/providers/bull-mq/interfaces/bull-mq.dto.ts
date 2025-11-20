@@ -9,7 +9,6 @@ export enum QueueName {
 	MAIN = "main",
 	EMAIL = "email",
 	NOTIFICATIONS = "notifications",
-	// Add more queues as needed
 }
 
 /**
@@ -22,6 +21,7 @@ export enum JobType {
 	SEND_EMAIL = "sendEmail",
 	PROCESS_IMAGE = "processImage",
 	GENERATE_REPORT = "generateReport",
+	EXAMPLE_JOB = "example_job",
 
 	// Notification queue jobs
 	SEND_NOTIFICATION = "sendNotification",
@@ -35,11 +35,11 @@ export enum JobType {
  */
 const bullMqDto = z
 	.object({
-		queueName: z.nativeEnum(QueueName).openapi({
+		queueName: z.enum(QueueName).openapi({
 			description: "Name of the queue",
 			example: QueueName.MAIN,
 		}),
-		jobType: z.nativeEnum(JobType).openapi({
+		jobType: z.enum(JobType).openapi({
 			description: "Type of job to process",
 			example: JobType.SEND_EMAIL,
 		}),
@@ -74,6 +74,9 @@ export type JobDataMap = {
 	};
 	[JobType.SEND_SMS]: {
 		phoneNumber: string;
+		message: string;
+	};
+	[JobType.EXAMPLE_JOB]: {
 		message: string;
 	};
 };

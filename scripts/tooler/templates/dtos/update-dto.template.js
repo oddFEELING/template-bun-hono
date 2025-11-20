@@ -6,9 +6,9 @@ import { toCamelCase, toPascalCase } from "../../utils/string.js";
  * @returns {string} The DTO template content
  */
 export function generateUpdateDtoTemplate(moduleName) {
-	const className = toPascalCase(moduleName);
-	const varName = toCamelCase(moduleName);
-	return `import { z } from "@hono/zod-openapi";
+  const className = toPascalCase(moduleName);
+  const varName = toCamelCase(moduleName);
+  return `import { z } from "@hono/zod-openapi";
 import { ${varName}EntityDto } from "./${moduleName}.dto";
 
 /**
@@ -17,14 +17,8 @@ import { ${varName}EntityDto } from "./${moduleName}.dto";
  */
 
 // ~ ======= Request DTO ======= ~
-const update${className}RequestDto = z
-  .object({
-    name: z.string().min(1).optional().openapi({
-      description: "Name of the ${moduleName}",
-      example: "Updated ${moduleName} name",
-    }),
-    // Add other updatable fields here (all optional)
-  })
+const update${className}RequestDto = ${varName}EntityDto
+  .partial()
   .openapi("Update${className}Request");
 
 // ~ ======= Response DTO ======= ~
