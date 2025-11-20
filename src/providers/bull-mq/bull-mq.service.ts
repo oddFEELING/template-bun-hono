@@ -328,13 +328,22 @@ export class BullMqProvider {
 
 	/**
 	 * Create QueueEvents listener for monitoring queue events
+	 * Returns existing listener if already created (prevents duplicates during hot reload)
 	 */
 	private createQueueEventsListener(queueName: QueueName): QueueEvents {
+		// Check if QueueEvents listener already exists
+		if (this.queueEvents.has(queueName)) {
+			this.logger.info(
+				`[BullMqProvider] QueueEvents listener already exists for queue "${queueName}", skipping creation`
+			);
+			return this.queueEvents.get(queueName) as QueueEvents;
+		}
+
 		const queueEvents = new QueueEvents(queueName, {
 			connection: this.redisOptions,
 		});
 
-		// Listen to various queue events
+		// Job lifecycle events
 		queueEvents.on("waiting", ({ jobId }) => {
 			this.logger.info(
 				`[BullMqProvider][${queueName}] Job ${jobId} is waiting`
@@ -347,6 +356,12 @@ export class BullMqProvider {
 			);
 		});
 
+		queueEvents.on("progress", ({ jobId, data }) => {
+			this.logger.info(
+				`[BullMqProvider][${queueName}] Job ${jobId} progress: ${data}%`
+			);
+		});
+
 		queueEvents.on("completed", ({ jobId, returnvalue }) => {
 			this.logger.info(
 				`[BullMqProvider][${queueName}] Job ${jobId} completed with result: ${JSON.stringify(returnvalue)}`
@@ -356,12 +371,6 @@ export class BullMqProvider {
 		queueEvents.on("failed", ({ jobId, failedReason }) => {
 			this.logger.error(
 				`[BullMqProvider][${queueName}] Job ${jobId} failed: ${failedReason}`
-			);
-		});
-
-		queueEvents.on("progress", ({ jobId, data }) => {
-			this.logger.info(
-				`[BullMqProvider][${queueName}] Job ${jobId} progress: ${data}%`
 			);
 		});
 

@@ -13,6 +13,7 @@ const serviceGlob = new Bun.Glob("**/*.service.ts");
 import * as Sentry from "@sentry/bun";
 
 import { env } from "./config";
+import { registerJobConsumers } from "./providers/bull-mq/register-consumers";
 
 const serviceFiles = serviceGlob.scanSync({
 	cwd: import.meta.dir,
@@ -36,3 +37,5 @@ Sentry.init({
 for (const file of serviceFiles) {
 	await import(file);
 }
+
+registerJobConsumers();
